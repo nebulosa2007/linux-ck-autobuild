@@ -1,48 +1,124 @@
 #!/bin/bash
-# linux-ck-autobuild
-VERSION=0.4.1
 # Author: Jochum D, jooch (at) gmx (dot) com
+# Maintainer: Nebulosa
 # License: GPL3
 # About: This script will automatically build specified ck kernels
 # Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
-# URL: https://github.com/j00ch/linux-ck-autobuild
+VERSION=0.4.1
 
 program_name="linux-ck-autobuild"
+
+function subarches {
+	cat << EOF > $1
+arch_1="mk8"              #  1. AMD Opteron/Athlon64/Hammer/K8 (MK8)
+arch_2="mk8sse3"          #  2. AMD Opteron/Athlon64/Hammer/K8 with SSE3 (MK8SSE3) (NEW)
+arch_3="mk10"             #  3. AMD 61xx/7x50/PhenomX3/X4/II/K10 (MK10) (NEW)
+arch_4="mbarcelona"       #  4. AMD Barcelona (MBARCELONA) (NEW)
+arch_5="mbobcat"          #  5. AMD Bobcat (MBOBCAT) (NEW)
+arch_6="mjaguar"          #  6. AMD Jaguar (MJAGUAR) (NEW)
+arch_7="mbulldozer"       #  7. AMD Bulldozer (MBULLDOZER) (NEW)
+arch_8="mpiledriver"      #  8. AMD Piledriver (MPILEDRIVER) (NEW)
+arch_9="msteamroller"     #  9. AMD Steamroller (MSTEAMROLLER) (NEW)
+arch_10="mexcavator"      #  10. AMD Excavator (MEXCAVATOR) (NEW)
+arch_11="mzen"            #  11. AMD Zen (MZEN) (NEW)
+arch_12="mzen2"           #  12. AMD Zen 2 (MZEN2) (NEW)
+arch_13="mzen3"           #  13. AMD Zen 3 (MZEN3) (NEW)
+arch_14="mzen4"           #  14. AMD Zen 4 (MZEN4) (NEW)
+arch_15="mpsc"            #  15. Intel P4 / older Netburst based Xeon (MPSC)
+arch_16="mcore2"          #  16. Intel Core 2 (MCORE2)
+arch_17="matom"           #  17. Intel Atom (MATOM)
+arch_18="mnehalem"        #  18. Intel Nehalem (MNEHALEM) (NEW)
+arch_19="mwestmere"       #  19. Intel Westmere (MWESTMERE) (NEW)
+arch_20="msilvermont"     #  20. Intel Silvermont (MSILVERMONT) (NEW)
+arch_21="mgoldmont"       #  21. Intel Goldmont (MGOLDMONT) (NEW)
+arch_22="mgoldmontplus"   #  22. Intel Goldmont Plus (MGOLDMONTPLUS) (NEW)
+arch_23="msandybridge"    #  23. Intel Sandy Bridge (MSANDYBRIDGE) (NEW)
+arch_24="mivybridge"      #  24. Intel Ivy Bridge (MIVYBRIDGE) (NEW)
+arch_25="mhaswell"        #  25. Intel Haswell (MHASWELL) (NEW)
+arch_26="mbroadwell"      #  26. Intel Broadwell (MBROADWELL) (NEW)
+arch_27="mskylake"        #  27. Intel Skylake (MSKYLAKE) (NEW)
+arch_28="mskylakex"       #  28. Intel Skylake X (MSKYLAKEX) (NEW)
+arch_29="mcannonlake"     #  29. Intel Cannon Lake (MCANNONLAKE) (NEW)
+arch_30="micelake"        #  30. Intel Ice Lake (MICELAKE) (NEW)
+arch_31="mcascadelake"    #  31. Intel Cascade Lake (MCASCADELAKE) (NEW)
+arch_32="mcooperlake"     #  32. Intel Cooper Lake (MCOOPERLAKE) (NEW)
+arch_33="mtigerlake"      #  33. Intel Tiger Lake (MTIGERLAKE) (NEW)
+arch_34="msapphirerapids" #  34. Intel Sapphire Rapids (MSAPPHIRERAPIDS) (NEW)
+arch_35="mrocketlake"     #  35. Intel Rocket Lake (MROCKETLAKE) (NEW)
+arch_36="malderlake"      #  36. Intel Alder Lake (MALDERLAKE) (NEW)
+arch_37="mraptorlake"     #  37. Intel Raptor Lake (MRAPTORLAKE) (NEW)
+arch_38="mmeteorlake"     #  38. Intel Meteor Lake (MMETEORLAKE) (NEW)
+arch_39="generic_cpu"     #  39. Generic-x86-64 (GENERIC_CPU)
+arch_40="generic_cpu2"    #  40. Generic-x86-64-v2 (GENERIC_CPU2) (NEW)
+arch_41="generic_cpu3"    #  41. Generic-x86-64-v3 (GENERIC_CPU3) (NEW)
+arch_42="generic_cpu4"    #  42. Generic-x86-64-v4 (GENERIC_CPU4) (NEW)
+arch_43="mnative_intel"   #  43. Intel-Native optimizations autodetected by the compiler (MNATIVE_INTEL) (NEW)
+arch_44="mnative_amd"     #  44. AMD-Native optimizations autodetected by the compiler (MNATIVE_AMD) (NEW)
+EOF
+}
+
+function default_conf {
+	    cat << EOF > $1
+CONFIG_VERSION=0.4.1
+# Preferred editor for editing settings.
+editor=""
+
+# The base directory on this system where the directories to sync are located. Don't add a slash at the end!
+BUILDDIR="/home/$USER/.local/linux-ck-autobuild"
+
+# If you have a local repository and wish to automatically add completed builds to it you can enable it by 
+# setting USE_LOCAL_REPO to "y", leave empty to disable.
+USE_LOCAL_REPO=""
+# location of your local repository and database. Don't add a slash at the end!
+LOCAL_REPO="/home/$USER/.local/linux-ck-autobuild/local_repo"
+LOCAL_REPO_DB="/home/$USER/.local/linux-ck-autobuild/local_repo/repo.db.tar.gz"
+
+# List the sub architecture you want to build : ( 15 )
+# In case of multiple architectures separate them with a space like so: ( 15 8 )
+SUBARCH=( 39 )
+
+# If you have the modprobe-db package installed and wish to use it, change to 'y' otherwise leave empty.
+# With the modprobe-db package only the modules that were listed by modprobe-db get build, significantly
+# reducing build times.
+# See: https://wiki.archlinux.org/title/Modprobed-db 
+USE_MODPROBE_DB=""
+
+# Control the maximum load on the CPU('s) Uncomment your preferred option, the default is maximum.
+#
+# Set a load percentage with maxload, replace 90/100 with preffered percentage
+# maxload=$(( $(nproc)*90/100 ))
+# makeflags="-j$maxload"
+# OR
+# Use a fixed number of cores (2 cores in this example) if not all need using
+# makeflags="-j2"
+# OR
+# Maximum load
+makeflags="-j$(nproc)"
+
+# Select a repo-ck mirror to use when seeking for prebuilt packages (only one can be enabled).
+repo_ck_mirror="https://mirror.lesviallon.fr/repo-ck/os/x86_64"
+#repo_ck_mirror="http://repo-ck.com/x86_64"
+
+# Sets the interval with which the watchdog monitors for a new kernel
+WATCHDOG_INTERVAL="6h"
+
+# User commands to run after compiling kernels, example: 'echo "Autobuild done" | mail -s "Autobuild done" mail@domain.tld'
+USER_COMMAND1=""
+USER_COMMAND2=""
+USER_COMMAND3=""
+EOF
+}
 
 function print_help {
 echo "
 $program_name, version $VERSION
 
-A tool to automatically build ck kernels.
+A tool to automatically build -ck kernels.
 
 Options:
 -h,	--help	Display this help
 -c,		Create and/or set options
-
---enable-autostart 	Enable daemon to fully automate build
---disable-autostart	Disable daemon (default)
-
-If you don't have a graphical environment you can use the systemd option:
-'systemctl enable $program_name@$USER.service'
 "
-exit 1
-}
-
-function enable_autostart {
-service_state="$(systemctl is-active linux-ck-autobuild@$USER.service)"
-if [[ $service_state = "active" ]] || [ -r /etc/systemd/system/multi-user.target.wants/linux-ck-autobuild@$USER.service ]; then
-	echo "ERROR: systemd service is currently enabled or active, you should disable that first." && exit 1
-else
-yes_or_no "$msg This will install the daemon into the user's autostart folder, proceed?" &&
-cp /etc/$program_name/$program_name-daemon.desktop /home/$USER/.config/autostart/$program_name-daemon.desktop
-echo "Installed $program_name-daemon.desktop in /home/$USER/.config/autostart" && exit 1
-fi
-}
-
-function disable_autostart {
-yes_or_no "$msg This will remove the daemon from user's autostart folder, proceed?" &&
-rm /home/$USER/.config/autostart/$program_name-daemon.desktop
-echo "Removed $program_name-daemon.desktop from /home/$USER/.config/autostart"
 exit 1
 }
 
@@ -68,27 +144,26 @@ if [ -r /home/$USER/.config/$program_name/$program_name.conf ]; then
 	fi
 
 else
-	. /etc/$program_name/default.conf
-	yes_or_no "$msg Configuration not found, copy default config?" &&
-	mkdir /home/$USER/.config/$program_name/
-	cp /etc/$program_name/default.conf /home/$USER/.config/$program_name/$program_name.conf
+	mkdir -p /home/$USER/.config/$program_name/
+    default_conf /home/$USER/.config/$program_name/$program_name.conf
+	subarches /home/$USER/.config/$program_name/subarches
 	edit_config
 fi
 }
 
 function update_config {
 
-UPDATE=( editor BUILDDIR USE_MODPROBE_DB maxload makeflags WATCHDOG_INTERVAL TIMEOUT TIMEOUT_UNIT POSTPONED USER_COMMAND1 USER_COMMAND2 USER_COMMAND3)
+UPDATE=( editor BUILDDIR USE_MODPROBE_DB maxload makeflags WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3)
 
 mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
-cp /etc/$program_name/default.conf /home/$USER/.config/$program_name/$program_name.conf
+default_conf /home/$USER/.config/$program_name/$program_name.conf
 
 for element in "${UPDATE[@]}"; do
 	sed -i '/^#/!s|'$element'=".*"|'$element'="'${!element}'"|g' /home/$USER/.config/$program_name/$program_name.conf
 done
 
 sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=( '"${SUBARCH[*]}"' )/g' /home/$USER/.config/$program_name/$program_name.conf
-echo "Config updated, you will need to restart this program manually." && exit 1
+echo "Config updated!" && exit 1
 }
 
 function edit_config {
@@ -140,7 +215,7 @@ function check_repo_ck {
 function main_program {
 	load_config
 	check_build_dir
-	. /etc/$program_name/subarches
+	. /home/$USER/.config/$program_name/subarches
 	latest_version=$(curl -s https://aur.archlinux.org/packages/linux-ck | grep -o -P '(?<=linux-ck ).*(?=</h2)')
 	sed -i '/^build().*/a MAKEFLAGS="'$makeflags'"' $BUILDDIR/linux-ck/PKGBUILD
 	for element in "${SUBARCH[@]}"; do
@@ -150,9 +225,9 @@ function main_program {
 			echo "$(date +"%Y-%m-%d_%H:%M") Kernel fetched from repo-ck ${!subarch_name}-$latest_version > $BUILDDIR/linux-ck/linux-ck-${!subarch_name}-$latest_version.log"
 		else
 			if [ -z "$USE_MODPROBE_DB" ]; then 
-			sed -i '/pkgbase=/c\pkgbase=linux-ck-'${!subarch_name}'' $BUILDDIR/linux-ck/PKGBUILD
+				sed -i '/pkgbase=/c\pkgbase=linux-ck-'${!subarch_name}'' $BUILDDIR/linux-ck/PKGBUILD
 			else
-			sed -i '/pkgbase=/c\pkgbase=linux-ck-'${!subarch_name}'-modprobed' $BUILDDIR/linux-ck/PKGBUILD
+				sed -i '/pkgbase=/c\pkgbase=linux-ck-'${!subarch_name}'-modprobed' $BUILDDIR/linux-ck/PKGBUILD
 			fi
 			sed -i '/_localmodcfg=/c\_localmodcfg='$USE_MODPROBE_DB'' $BUILDDIR/linux-ck/PKGBUILD
 			sed -i '/_subarch=/c\_subarch='$element'' $BUILDDIR/linux-ck/PKGBUILD
@@ -165,11 +240,9 @@ function main_program {
 	update_repo
 }
 
-[[ $1 = "-h" ]] && print_help || 
-[[ $1 = "--help" ]] && print_help || 
-[[ $1 = "--enable-autostart" ]] && enable_autostart || 
-[[ $1 = "--disable-autostart" ]] && disable_autostart || 
-[[ $1 = "-c" ]] && load_config && edit_config || 
+[[ $1 = "-h" ]] && print_help
+[[ $1 = "--help" ]] && print_help
+[[ $1 = "-c" ]] && load_config && edit_config
 
 main_program
 $USER_COMMAND1
