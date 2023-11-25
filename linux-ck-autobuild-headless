@@ -2,14 +2,14 @@
 # Author: Jochum D, jooch (at) gmx (dot) com
 # Maintainer: Nebulosa
 # License: GPL3
-# About: This script will automatically build specified ck kernels
+# About: This script will automatically build specified ck kernels on a headless machines.
 # Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
-VERSION=0.4.1
+VERSION=0.5.0
 
 program_name="linux-ck-autobuild"
 
 function subarches {
-	cat << EOF > $1
+    cat << EOF > $1
 arch_1="mk8"              #  1. AMD Opteron/Athlon64/Hammer/K8 (MK8)
 arch_2="mk8sse3"          #  2. AMD Opteron/Athlon64/Hammer/K8 with SSE3 (MK8SSE3) (NEW)
 arch_3="mk10"             #  3. AMD 61xx/7x50/PhenomX3/X4/II/K10 (MK10) (NEW)
@@ -48,7 +48,7 @@ arch_35="mrocketlake"     #  35. Intel Rocket Lake (MROCKETLAKE) (NEW)
 arch_36="malderlake"      #  36. Intel Alder Lake (MALDERLAKE) (NEW)
 arch_37="mraptorlake"     #  37. Intel Raptor Lake (MRAPTORLAKE) (NEW)
 arch_38="mmeteorlake"     #  38. Intel Meteor Lake (MMETEORLAKE) (NEW)
-arch_39="generic_cpu"     #  39. Generic-x86-64 (GENERIC_CPU)
+arch_39=""                #  39. Generic-x86-64 (GENERIC_CPU) (DEFAULT)
 arch_40="generic_cpu2"    #  40. Generic-x86-64-v2 (GENERIC_CPU2) (NEW)
 arch_41="generic_cpu3"    #  41. Generic-x86-64-v3 (GENERIC_CPU3) (NEW)
 arch_42="generic_cpu4"    #  42. Generic-x86-64-v4 (GENERIC_CPU4) (NEW)
@@ -58,15 +58,15 @@ EOF
 }
 
 function default_conf {
-	    cat << EOF > $1
-CONFIG_VERSION=0.4.1
+    cat << EOF > $1
+CONFIG_VERSION=0.5.0
 # Preferred editor for editing settings.
-editor=""
+editor="need_config"
 
 # The base directory on this system where the directories to sync are located. Don't add a slash at the end!
 BUILDDIR="/home/$USER/.local/linux-ck-autobuild"
 
-# If you have a local repository and wish to automatically add completed builds to it you can enable it by 
+# If you have a local repository and wish to automatically add completed builds to it you can enable it by
 # setting USE_LOCAL_REPO to "y", leave empty to disable.
 USE_LOCAL_REPO=""
 # location of your local repository and database. Don't add a slash at the end!
@@ -75,25 +75,26 @@ LOCAL_REPO_DB="/home/$USER/.local/linux-ck-autobuild/local_repo/repo.db.tar.gz"
 
 # List the sub architecture you want to build : ( 15 )
 # In case of multiple architectures separate them with a space like so: ( 15 8 )
+# See file 'subarch' for all possible variants
 SUBARCH=( 39 )
 
 # If you have the modprobe-db package installed and wish to use it, change to 'y' otherwise leave empty.
 # With the modprobe-db package only the modules that were listed by modprobe-db get build, significantly
 # reducing build times.
-# See: https://wiki.archlinux.org/title/Modprobed-db 
+# See: https://wiki.archlinux.org/title/Modprobed-db
 USE_MODPROBE_DB=""
 
 # Control the maximum load on the CPU('s) Uncomment your preferred option, the default is maximum.
 #
 # Set a load percentage with maxload, replace 90/100 with preffered percentage
-# maxload=$(( $(nproc)*90/100 ))
-# makeflags="-j$maxload"
+# maxload=\$(( \$(nproc)*90/100 ))
+# makeflags="-j\$maxload"
 # OR
 # Use a fixed number of cores (2 cores in this example) if not all need using
 # makeflags="-j2"
 # OR
 # Maximum load
-makeflags="-j$(nproc)"
+makeflags="-j\$(nproc)"
 
 # Select a repo-ck mirror to use when seeking for prebuilt packages (only one can be enabled).
 repo_ck_mirror="https://mirror.lesviallon.fr/repo-ck/os/x86_64"
@@ -110,139 +111,144 @@ EOF
 }
 
 function print_help {
-echo "
-$program_name, version $VERSION
+    echo "
+$program_name, version $VERSION for headless machines.
 
 A tool to automatically build -ck kernels.
 
 Options:
--h,	--help	Display this help
--c,		Create and/or set options
+-h,    --help    Display this help
+-c,              Create and/or set options
 "
-exit 1
+    exit 1
 }
 
 function yes_or_no {
     while true; do
         read -p "$* [y/n]: " yn
         case $yn in
-            [Yy]*) return ;;  
+            [Yy]*) return ;;
             [Nn]*) echo "Aborted" ; exit 1 ;;
         esac
     done
 }
 
-function load_config {
-if [ -r /home/$USER/.config/$program_name/$program_name.conf ]; then
-    . /home/$USER/.config/$program_name/$program_name.conf
-    if [ "$CONFIG_VERSION" == "$VERSION" ]; then
-		if [[ -z $editor || -z $BUILDDIR || -z $SUBARCH || -z $makeflags ]]; then
-		echo "ERROR: One or more settings are missing, please check your configuration." && exit 1
-		fi
-	else
-	update_config
-	fi
+function edit_config {
+    if [ -f /usr/bin/$editor ]; then
+        $editor /home/$USER/.config/$program_name/$program_name.conf
+        . /home/$USER/.config/$program_name/$program_name.conf
+    else
+        echo -e "No editor found, please set your editor in:\n/home/$USER/.config/$program_name/$program_name.conf"
+    fi
+    exit 1
+}
 
-else
-	mkdir -p /home/$USER/.config/$program_name/
-    default_conf /home/$USER/.config/$program_name/$program_name.conf
-	subarches /home/$USER/.config/$program_name/subarches
-	edit_config
-fi
+function load_config {
+    if [ -r /home/$USER/.config/$program_name/$program_name.conf ]; then
+        . /home/$USER/.config/$program_name/$program_name.conf
+    if [ "$CONFIG_VERSION" == "$VERSION" ]; then
+        if [[ -z $editor || -z $BUILDDIR || -z $SUBARCH || -z $makeflags ]]; then
+            echo "ERROR: One or more settings are missing, please check your configuration." && exit 1
+        fi
+        else
+            update_config
+    fi
+    else
+       mkdir -p /home/$USER/.config/$program_name/
+       default_conf /home/$USER/.config/$program_name/$program_name.conf
+       subarches /home/$USER/.config/$program_name/subarches
+       edit_config
+    fi
 }
 
 function update_config {
+    UPDATE=( editor BUILDDIR USE_MODPROBE_DB maxload makeflags WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3)
 
-UPDATE=( editor BUILDDIR USE_MODPROBE_DB maxload makeflags WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3)
+    mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
+    default_conf /home/$USER/.config/$program_name/$program_name.conf
 
-mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
-default_conf /home/$USER/.config/$program_name/$program_name.conf
+    for element in "${UPDATE[@]}"; do
+        sed -i '/^#/!s|'$element'=".*"|'$element'="'${!element}'"|g' /home/$USER/.config/$program_name/$program_name.conf
+    done
 
-for element in "${UPDATE[@]}"; do
-	sed -i '/^#/!s|'$element'=".*"|'$element'="'${!element}'"|g' /home/$USER/.config/$program_name/$program_name.conf
-done
-
-sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=( '"${SUBARCH[*]}"' )/g' /home/$USER/.config/$program_name/$program_name.conf
-echo "Config updated!" && exit 1
+    sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=( '"${SUBARCH[*]}"' )/g' /home/$USER/.config/$program_name/$program_name.conf
+    echo "Config updated!" && exit 1
 }
 
-function edit_config {
-	if [ -r /usr/bin/$editor ]; then
-		$editor /home/$USER/.config/$program_name/$program_name.conf
-		. /home/$USER/.config/$program_name/$program_name.conf
-	else
-		echo -e "No editor found, please set your config in:\n/home/$USER/.config/$program_name/$program_name.conf"
-		exit 1
-	fi
-}
 
 function update_repo {
-	if [ -n "$USE_LOCAL_REPO" ]; then
-		mv $BUILDDIR/linux-ck/*$latest_version-x86_64.pkg.tar.zst $LOCAL_REPO
-		repo-add $LOCAL_REPO_DB $LOCAL_REPO/*$latest_version-x86_64.pkg.tar.zst
-	fi
+    if [ -n "$USE_LOCAL_REPO" ]; then
+        mv $BUILDDIR/linux-ck/*$latest_version-x86_64.pkg.tar.zst $LOCAL_REPO
+        repo-add $LOCAL_REPO_DB $LOCAL_REPO/*$latest_version-x86_64.pkg.tar.zst
+    fi
 }
 
 function check_build_dir {
-	if	[ -r $BUILDDIR/linux-ck/PKGBUILD ]; then
-	git -C $BUILDDIR/linux-ck reset --hard --quiet
-	git -C $BUILDDIR/linux-ck pull --quiet
-	else
-	yes_or_no "$msg PKGBUILD not found at configured location, set up now?" &&
-	mkdir -p $BUILDDIR
-	echo "Cloning AUR package"
-	git -C $BUILDDIR clone https://aur.archlinux.org/linux-ck.git --quiet
-	fi
+    if [ -r $BUILDDIR/linux-ck/PKGBUILD ]; then
+        git -C $BUILDDIR/linux-ck reset --hard --quiet
+        git -C $BUILDDIR/linux-ck pull --quiet
+    else
+        yes_or_no "$msg PKGBUILD not found at configured location, set up now?" &&
+        mkdir -p $BUILDDIR
+        echo "Cloning AUR package"
+        git -C $BUILDDIR clone https://aur.archlinux.org/linux-ck.git --quiet
+    fi
 }
 
 function check_repo_ck {
-	curl_cmd="curl --head --fail --silent"
-	kernel=$($curl_cmd $repo_ck_mirror/linux-ck-${!subarch_name}-$latest_version-x86_64.pkg.tar.zst | grep 'HTTP/2 200')
-	headers=$($curl_cmd $repo_ck_mirror/linux-ck-${!subarch_name}-headers-$latest_version-x86_64.pkg.tar.zst | grep 'HTTP/2 200')
-	if [[ -n $kernel && $headers ]]; then
-	cd $BUILDDIR/linux-ck
-	if	[ -r $BUILDDIR/linux-ck/linux-ck-${!subarch_name}-$latest_version-x86_64.pkg.tar.zst ]; then
-		echo "Selected subarches found in build dir"
-		else
-		curl -O $repo_ck_mirror/linux-ck-${!subarch_name}-$latest_version-x86_64.pkg.tar.zst
-		curl -O $repo_ck_mirror/linux-ck-${!subarch_name}-headers-$latest_version-x86_64.pkg.tar.zst
-		fi
-	else
-	echo "Selected subarch not available in repo-ck"
-	fi
+    curl_cmd="curl --head --fail --silent"
+    kernel=$($curl_cmd $repo_ck_mirror/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst | grep 'HTTP/2 200')
+    headers=$($curl_cmd $repo_ck_mirror/linux-ck-${subarch_name}headers-$latest_version-x86_64.pkg.tar.zst | grep 'HTTP/2 200')
+    if [[ -n $kernel && $headers ]]; then
+        cd $BUILDDIR/linux-ck
+        if    [ -r $BUILDDIR/linux-ck/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst ]; then
+            echo "Selected subarches found in build dir"
+        else
+            curl -O $repo_ck_mirror/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst
+            curl -O $repo_ck_mirror/linux-ck-${subarch_name}headers-$latest_version-x86_64.pkg.tar.zst
+        fi
+    else
+        echo "Selected subarch not available in repo-ck"
+    fi
 }
 
 function main_program {
-	load_config
-	check_build_dir
-	. /home/$USER/.config/$program_name/subarches
-	latest_version=$(curl -s https://aur.archlinux.org/packages/linux-ck | grep -o -P '(?<=linux-ck ).*(?=</h2)')
-	sed -i '/^build().*/a MAKEFLAGS="'$makeflags'"' $BUILDDIR/linux-ck/PKGBUILD
-	for element in "${SUBARCH[@]}"; do
-		subarch_name="arch_$element"
-		check_repo_ck
-		if	[ -r $BUILDDIR/linux-ck/linux-ck-${!subarch_name}-$latest_version-x86_64.pkg.tar.zst ]; then
-			echo "$(date +"%Y-%m-%d_%H:%M") Kernel fetched from repo-ck ${!subarch_name}-$latest_version > $BUILDDIR/linux-ck/linux-ck-${!subarch_name}-$latest_version.log"
-		else
-			if [ -z "$USE_MODPROBE_DB" ]; then 
-				sed -i '/pkgbase=/c\pkgbase=linux-ck-'${!subarch_name}'' $BUILDDIR/linux-ck/PKGBUILD
-			else
-				sed -i '/pkgbase=/c\pkgbase=linux-ck-'${!subarch_name}'-modprobed' $BUILDDIR/linux-ck/PKGBUILD
-			fi
-			sed -i '/_localmodcfg=/c\_localmodcfg='$USE_MODPROBE_DB'' $BUILDDIR/linux-ck/PKGBUILD
-			sed -i '/_subarch=/c\_subarch='$element'' $BUILDDIR/linux-ck/PKGBUILD
-			echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build ${!subarch_name}-$latest_version"
-			(cd $BUILDDIR/linux-ck && makepkg -C) > $BUILDDIR/linux-ck/linux-ck-${!subarch_name}-$latest_version.log
-			echo "$(date +"%Y-%m-%d_%H:%M") End kernel build ${!subarch_name}-$latest_version"
-		fi
-	done
-	echo "$latest_version" > $BUILDDIR/linux-ck/.last_build
-	update_repo
+    load_config
+    check_build_dir
+    . /home/$USER/.config/$program_name/subarches
+    latest_version=$(curl -s https://aur.archlinux.org/packages/linux-ck | grep -o -P '(?<=linux-ck ).*(?=</h2)')
+    sed -i '/^build().*/a MAKEFLAGS="'$makeflags'"' $BUILDDIR/linux-ck/PKGBUILD
+    for element in "${SUBARCH[@]}"; do
+        subarch_name="arch_$element"
+        [ "${!subarch_name}" != "" ] && subarch_name=${!subarch_name}"-" || subarch_name=${!subarch_name}
+        check_repo_ck
+        if    [ -r $BUILDDIR/linux-ck/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst ]; then
+            echo "$(date +"%Y-%m-%d_%H:%M") Kernel fetched from repo-ck $subarch_name$latest_version" > $BUILDDIR/linux-ck/linux-ck-$subarch_name$latest_version.log
+        else
+            if [ -z "$USE_MODPROBE_DB" ]; then
+                sed -i '/pkgbase=/c\pkgbase=linux-ck-'${subarch_name%-}'' $BUILDDIR/linux-ck/PKGBUILD
+            else
+                sed -i '/pkgbase=/c\pkgbase=linux-ck-'$subarch_name'modprobed' $BUILDDIR/linux-ck/PKGBUILD
+                sed -i '/_localmodcfg=/c\_localmodcfg='$USE_MODPROBE_DB'' $BUILDDIR/linux-ck/PKGBUILD
+            fi
+            sed -i '/_subarch=/c\_subarch='$element'' $BUILDDIR/linux-ck/PKGBUILD
+            echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build $subarch_name$latest_version"
+            (cd $BUILDDIR/linux-ck && makepkg -sC ) > $BUILDDIR/linux-ck/linux-ck-$subarch_name$latest_version.log
+            echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $subarch_name$latest_version"
+        fi
+    done
+    echo "$latest_version" > $BUILDDIR/linux-ck/.last_build
+    update_repo
 }
 
-[[ $1 = "-h" ]] && print_help
-[[ $1 = "--help" ]] && print_help
-[[ $1 = "-c" ]] && load_config && edit_config
+if [ -n "$1" ]
+then
+    case "$1" in
+    -h | --help ) print_help ;;
+    -c          ) load_config && edit_config ;;
+     *          ) echo "Option not found, try -h or --help" && exit 1 ;;
+    esac
+fi
 
 main_program
 $USER_COMMAND1
