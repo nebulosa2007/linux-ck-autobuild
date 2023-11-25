@@ -4,7 +4,7 @@
 # License: GPL3
 # About: This script will automatically build specified ck kernels on a headless machines.
 # Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
-VERSION=0.5.0
+VERSION=0.5.1
 
 program_name="linux-ck-autobuild"
 
@@ -59,7 +59,7 @@ EOF
 
 function default_conf {
     cat << EOF > $1
-CONFIG_VERSION=0.5.0
+CONFIG_VERSION=0.5.1
 # Preferred editor for editing settings.
 editor="need_config"
 
@@ -119,6 +119,7 @@ A tool to automatically build -ck kernels.
 Options:
 -h,    --help    Display this help
 -c,              Create and/or set options
+-a,              Choose desired subarches
 "
     exit 1
 }
@@ -131,6 +132,14 @@ function yes_or_no {
             [Nn]*) echo "Aborted" ; exit 1 ;;
         esac
     done
+}
+
+function set_subarches {
+    message="Use tab for select desired arch. Default is Generic-x86-64. See: https://wiki.archlinux.org/index.php/Repo-ck"
+    archs=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo $message" --preview-window=wrap | cut -d'.' -f1 | tr -d '\n')
+    sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=('"${archs[*]}"' )/g' /home/$USER/.config/$program_name/$program_name.conf
+	echo "Config updated!"
+	exit 1
 }
 
 function edit_config {
@@ -247,6 +256,7 @@ if [ -n "$1" ]; then
     case "$1" in
     -h | --help ) print_help ;;
     -c          ) load_config && edit_config ;;
+    -a          ) set_subarches; exit 1 ;;
      *          ) echo "Option not found, try -h or --help" && exit 1 ;;
     esac
 fi
