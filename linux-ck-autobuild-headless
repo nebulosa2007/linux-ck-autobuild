@@ -152,6 +152,7 @@ function load_config {
         fi
         else
             update_config
+            subarches /home/$USER/.config/$program_name/subarches
     fi
     else
        mkdir -p /home/$USER/.config/$program_name/
@@ -172,7 +173,8 @@ function update_config {
     done
 
     sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=( '"${SUBARCH[*]}"' )/g' /home/$USER/.config/$program_name/$program_name.conf
-    echo "Config updated!" && exit 1
+    echo "Config updated!"
+    exit 1
 }
 
 
@@ -188,7 +190,7 @@ function check_build_dir {
         git -C $BUILDDIR/linux-ck reset --hard --quiet
         git -C $BUILDDIR/linux-ck pull --quiet
     else
-        yes_or_no "$msg PKGBUILD not found at configured location, set up now?" &&
+        yes_or_no "$msg PKGBUILD not found at configured location, set up now?"
         mkdir -p $BUILDDIR
         echo "Cloning AUR package"
         git -C $BUILDDIR clone https://aur.archlinux.org/linux-ck.git --quiet
@@ -241,8 +243,7 @@ function main_program {
     update_repo
 }
 
-if [ -n "$1" ]
-then
+if [ -n "$1" ]; then
     case "$1" in
     -h | --help ) print_help ;;
     -c          ) load_config && edit_config ;;
