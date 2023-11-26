@@ -213,8 +213,8 @@ function check_build_dir {
 
 
 function check_repo_ck {
-    package_kernel="linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst"
-    package_header="linux-ck-${subarch_name}headers-$latest_version-x86_64.pkg.tar.zst"
+    package_kernel="linux-ck$subarch_name-$latest_version-x86_64.pkg.tar.zst"
+    package_header="linux-ck$subarch_name-headers-$latest_version-x86_64.pkg.tar.zst"
     if [ -n "USE_LOCAL_REPO" ] && [ -r $LOCAL_REPO/$package_kernel ]; then
        echo "found in local repo"
        return
@@ -254,21 +254,21 @@ function main_program {
     sed -i '/^build().*/a MAKEFLAGS="'$makeflags'"' $BUILD_DIR/linux-ck/PKGBUILD
     for element in "${SUBARCH[@]}"; do
         subarch_name="arch_$element"
-        [ "${!subarch_name}" != "" ] && subarch_name=${!subarch_name}"-" || subarch_name=${!subarch_name}
+        [ "${!subarch_name}" != "" ] && subarch_name="-"${!subarch_name} || subarch_name=${!subarch_name}
         found=$(check_repo_ck)
         if [ -z "$found" ]; then
             if [ -z "$USE_MODPROBE_DB" ]; then
-                sed -i '/pkgbase=/c\pkgbase=linux-ck-'${subarch_name%-}'' $BUILD_DIR/linux-ck/PKGBUILD
+                sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'' $BUILD_DIR/linux-ck/PKGBUILD
             else
-                sed -i '/pkgbase=/c\pkgbase=linux-ck-'$subarch_name'modprobed' $BUILD_DIR/linux-ck/PKGBUILD
+                sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'-modprobed' $BUILD_DIR/linux-ck/PKGBUILD
                 sed -i '/_localmodcfg=/c\_localmodcfg='$USE_MODPROBE_DB'' $BUILD_DIR/linux-ck/PKGBUILD
             fi
             sed -i '/_subarch=/c\_subarch='$element'' $BUILD_DIR/linux-ck/PKGBUILD
-            echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build $subarch_name$latest_version"
-            (cd $BUILD_DIR/linux-ck && makepkg -sC ) > $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version.log
-            echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $subarch_name$latest_version"
+            echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name-$latest_version"
+            (cd $BUILD_DIR/linux-ck && makepkg -sC ) > $BUILD_DIR/linux-ck/linux-ck$subarch_name-$latest_version.log
+            echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name-$latest_version"
 		else
-			echo "$(date +"%Y-%m-%d_%H:%M") Kernel $subarch_name$latest_version $found" > $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version.log
+			echo "$(date +"%Y-%m-%d_%H:%M") Kernel linux-ck$subarch_name-$latest_version $found" > $BUILD_DIR/linux-ck/linux-ck$subarch_name-$latest_version.log
         fi
     done
     echo "$latest_version" > $BUILD_DIR/linux-ck/.last_build
