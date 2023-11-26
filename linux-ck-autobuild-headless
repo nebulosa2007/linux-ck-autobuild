@@ -204,8 +204,8 @@ function update_config {
 function update_repo {
     if [ -n "$USE_LOCAL_REPO" ]; then
         mkdir -p $LOCAL_REPO
-        mv $BUILD_DIR/linux-ck/*$latest_version-x86_64.pkg.tar.zst $LOCAL_REPO
-        repo-add $LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz $LOCAL_REPO/*$latest_version-x86_64.pkg.tar.zst
+        mv $BUILD_DIR/linux-ck/*$latest_version-x86_64.pkg.tar.zst $LOCAL_REPO 2> /dev/null
+        repo-add -q -n --nocolor $LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz $LOCAL_REPO/*$latest_version-x86_64.pkg.tar.zst
     fi
 }
 
