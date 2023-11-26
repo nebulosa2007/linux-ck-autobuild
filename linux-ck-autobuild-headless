@@ -267,7 +267,7 @@ function main_program {
                 sed -i '/_localmodcfg=/c\_localmodcfg='$USE_MODPROBE_DB'' $BUILD_DIR/linux-ck/PKGBUILD
             fi
             sed -i '/_subarch=/c\_subarch='$element'' $BUILD_DIR/linux-ck/PKGBUILD
-            if [ -n "$USE_CLANG"]; then
+            if [ -n "$USE_CLANG" ]; then
                 sed -i '/_clangbuild=/c\_clangbuild='$USE_CLANG'' $BUILD_DIR/linux-ck/PKGBUILD
             fi
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name-$latest_version"
