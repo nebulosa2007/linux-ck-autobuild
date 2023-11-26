@@ -50,9 +50,9 @@ arch_36="malderlake"      #  36. Intel Alder Lake (MALDERLAKE) (NEW)
 arch_37="mraptorlake"     #  37. Intel Raptor Lake (MRAPTORLAKE) (NEW)
 arch_38="mmeteorlake"     #  38. Intel Meteor Lake (MMETEORLAKE) (NEW)
 arch_39=""                #  39. Generic-x86-64 (GENERIC_CPU) (DEFAULT)
-arch_40="generic_v2"      #  40. Generic-x86-64-v2 (GENERIC_CPU2) (NEW)
-arch_41="generic_v3"      #  41. Generic-x86-64-v3 (GENERIC_CPU3) (NEW)
-arch_42="generic_v4"      #  42. Generic-x86-64-v4 (GENERIC_CPU4) (NEW)
+arch_40="generic-v2"      #  40. Generic-x86-64-v2 (GENERIC_CPU2) (NEW)
+arch_41="generic-v3"      #  41. Generic-x86-64-v3 (GENERIC_CPU3) (NEW)
+arch_42="generic-v4"      #  42. Generic-x86-64-v4 (GENERIC_CPU4) (NEW)
 arch_43="mnative_intel"   #  43. Intel-Native optimizations autodetected by the compiler (MNATIVE_INTEL) (NEW)
 arch_44="mnative_amd"     #  44. AMD-Native optimizations autodetected by the compiler (MNATIVE_AMD) (NEW)
 EOF
@@ -226,12 +226,17 @@ function check_repo_ck {
     kernel=$($curl_cmd  $REPO_CK_MIRROR/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst | grep 'HTTP/2 200')
     headers=$($curl_cmd $REPO_CK_MIRROR/linux-ck-${subarch_name}headers-$latest_version-x86_64.pkg.tar.zst | grep 'HTTP/2 200')
     if [[ -n $kernel && $headers ]]; then
-        cd $BUILD_DIR/linux-ck
-        if    [ -r $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst ]; then
-            echo "Selected subarches found in build dir"
+        if [ -n "USE_LOCAL_REPO" ] && [ -r $LOCAL_REPO/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst ]; then
+            echo "Selected subarch found in local repo"
+            return
+        fi
+        if [ -r $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst ]; then
+            echo "Selected subarch found in build dir"
         else
-            curl -O $REPO_CK_MIRROR/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst
-            curl -O $REPO_CK_MIRROR/linux-ck-${subarch_name}headers-$latest_version-x86_64.pkg.tar.zst
+            echo "Mirroring selected subarch from $REPO_CK_MIRROR..."
+            cd $BUILD_DIR/linux-ck
+            curl -O -C - $REPO_CK_MIRROR/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst
+            curl -O -C - $REPO_CK_MIRROR/linux-ck-${subarch_name}headers-$latest_version-x86_64.pkg.tar.zst
         fi
     else
         echo "Selected subarch not available in $REPO_CK_MIRROR"
@@ -252,7 +257,7 @@ function main_program {
         subarch_name="arch_$element"
         [ "${!subarch_name}" != "" ] && subarch_name=${!subarch_name}"-" || subarch_name=${!subarch_name}
         check_repo_ck
-        if    [ -r $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst ]; then
+        if [ -r $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst ]; then
             echo "$(date +"%Y-%m-%d_%H:%M") Kernel fetched from repo-ck $subarch_name$latest_version" > $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version.log
         else
             if [ -z "$USE_MODPROBE_DB" ]; then
