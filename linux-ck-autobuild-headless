@@ -79,9 +79,9 @@ USE_LOCAL_REPO=""
 LOCAL_REPO="/home/$USER/.local/share/linux-ck-autobuild/local_repo"
 LOCAL_REPO_NAME="linux-ck"
 
-# List the sub architecture you want to build : ( 15 )
-# In case of multiple architectures separate them with a space like so: ( 15 8 )
-# See file 'subarch' for all possible variants
+# List the sub architecture you want to build : ( 39 )
+# In case of multiple architectures separate them with a space like so: ( 39 43 44 )
+# Or use option -a for select from subarches list, see --help
 SUBARCH=( 39 )
 
 # If you have the modprobe-db package installed and wish to use it, change to 'y' otherwise leave empty.
@@ -127,8 +127,8 @@ Options:
 
 function set_subarches {
     message="Default is Generic-x86-64 - number 39. See: https://wiki.archlinux.org/index.php/Repo-ck for more info"
-	if [ -x "$(command -v fzfc)" ]; then
-	    arch=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | tr -d '\n')
+	if [ -x "$(command -v fzf)" ]; then
+	    archs=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | tr -d '\n')
     else
         cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2
         echo -e "\n$message\n"
