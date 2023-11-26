@@ -4,7 +4,7 @@
 # License: GPL3
 # About: This script will automatically build specified ck kernels on a headless machines.
 # Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
-VERSION=0.5.4
+VERSION=0.6.0
 
 program_name="linux-ck-autobuild"
 
@@ -61,7 +61,7 @@ EOF
 
 function default_conf {
     cat << EOF > $1
-CONFIG_VERSION=0.5.4
+CONFIG_VERSION=0.6.0
 # Preferred editor for editing settings.
 EDITOR="need_config"
 
@@ -90,17 +90,8 @@ SUBARCH=( 39 )
 # See: https://wiki.archlinux.org/title/Modprobed-db
 USE_MODPROBE_DB=""
 
-# Control the maximum load on the CPU('s) Uncomment your preferred option, the default is maximum.
-#
-# Set a load percentage with maxload, replace 90/100 with preffered percentage
-# MAXLOAD=\$(( \$(nproc)*90/100 ))
-# MAKEFLAGS="-j\$maxload"
-# OR
-# Use a fixed number of cores (2 cores in this example) if not all need using
-# MAKEFLAGS="-j2"
-# OR
-# Maximum load
-MAKEFLAGS="-j\$(nproc)"
+# Compile using clang rather than gcc, change to 'y' otherwise leave empty.
+USE_CLANG=""
 
 # Select a repo-ck mirror to use when seeking for prebuilt packages (only one can be enabled).
 REPO_CK_MIRROR="https://mirror.lesviallon.fr/repo-ck/os/x86_64"
@@ -135,18 +126,19 @@ Options:
 
 
 function set_subarches {
-	list_arch=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2)
-    message="Default is Generic-x86-64 (#39). See: https://wiki.archlinux.org/index.php/Repo-ck for more info"
-	if [ -x "(command -v fzf)" ]; then
-	    archs=$(echo $list_arch | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo Use tab for select desired arches. $message" --preview-window=wrap | cut -d'.' -f1 | tr -d '\n')
+    message="Default is Generic-x86-64 - number 39. See: https://wiki.archlinux.org/index.php/Repo-ck for more info"
+	if [ -x "$(command -v fzfc)" ]; then
+	    arch=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | tr -d '\n')
     else
-        echo $list_arch | sed -E 's/ ([0-9]+)\./\n\1\./g'
+        cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2
         echo -e "\n$message\n"
         archs=" 39 "
         read -rp "Write numbers of desired arches above, space separated:" -e -i "${archs}" archs
     fi
-    sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=('"${archs[*]}"')/g' /home/$USER/.config/$program_name/$program_name.conf
-	echo "Config updated!"
+    if [ -n "$archs" ]; then
+        sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=('"${archs[*]}"')/g' /home/$USER/.config/$program_name/$program_name.conf
+	    echo "Config updated!"
+	fi
 	exit 1
 }
 
@@ -166,7 +158,7 @@ function load_config {
     if [ -r /home/$USER/.config/$program_name/$program_name.conf ]; then
         .   /home/$USER/.config/$program_name/$program_name.conf
     if [ "$CONFIG_VERSION" == "$VERSION" ]; then
-        if [[ -z $EDITOR || -z $BUILD_DIR || -z $SUBARCH || -z $MAKEFLAGS ]]; then
+        if [[ -z $EDITOR || -z $BUILD_DIR || -z $SUBARCH ]]; then
             echo "ERROR: One or more settings are missing, please check your configuration." && exit 1
         fi
         else
@@ -183,7 +175,7 @@ function load_config {
 
 
 function update_config {
-    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB MAXLOAD MAKEFLAGS REPO_CK_MIRROR REPO_CK_NAME WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 )
+    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB USE_CLANG REPO_CK_MIRROR REPO_CK_NAME WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 )
 
     mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
     default_conf /home/$USER/.config/$program_name/$program_name.conf
@@ -259,7 +251,6 @@ function main_program {
     latest_version=$(curl -s https://aur.archlinux.org/packages/linux-ck | grep -Po '(?<=linux-ck ).*(?=</h2)')
     [ "$latest_version" == "" ] && { echo "Error: latest version not defined from AUR. Check settings or connection!"; exit 1; }
 
-    sed -i '/^build().*/a MAKEFLAGS="'$makeflags'"' $BUILD_DIR/linux-ck/PKGBUILD
     for element in "${SUBARCH[@]}"; do
 
         subarch_name="arch_$element"
@@ -276,6 +267,9 @@ function main_program {
                 sed -i '/_localmodcfg=/c\_localmodcfg='$USE_MODPROBE_DB'' $BUILD_DIR/linux-ck/PKGBUILD
             fi
             sed -i '/_subarch=/c\_subarch='$element'' $BUILD_DIR/linux-ck/PKGBUILD
+            if [ -n "$USE_CLANG"]; then
+                sed -i '/_clangbuild=/c\_clangbuild='$USE_CLANG'' $BUILD_DIR/linux-ck/PKGBUILD
+            fi
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name-$latest_version"
             (cd $BUILD_DIR/linux-ck && makepkg -sC ) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name-$latest_version"
@@ -291,7 +285,7 @@ if [ -n "$1" ]; then
     case "$1" in
     -h | --help ) print_help ;;
     -c          ) load_config && edit_config ;;
-    -a          ) set_subarches; exit 1 ;;
+    -a          ) load_config && set_subarches; exit 1 ;;
      *          ) echo "Option not found, try -h or --help" && exit 1 ;;
     esac
 fi
