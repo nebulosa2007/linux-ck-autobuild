@@ -4,7 +4,7 @@
 # License: GPL3
 # About: This script will automatically build specified ck kernels on a headless machines.
 # Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
-VERSION=0.5.3
+VERSION=0.5.4
 
 program_name="linux-ck-autobuild"
 
@@ -61,7 +61,7 @@ EOF
 
 function default_conf {
     cat << EOF > $1
-CONFIG_VERSION=0.5.3
+CONFIG_VERSION=0.5.4
 # Preferred editor for editing settings.
 EDITOR="need_config"
 
@@ -104,7 +104,9 @@ MAKEFLAGS="-j\$(nproc)"
 
 # Select a repo-ck mirror to use when seeking for prebuilt packages (only one can be enabled).
 REPO_CK_MIRROR="https://mirror.lesviallon.fr/repo-ck/os/x86_64"
+REPO_CK_NAME="repo-ck"
 #REPO_CK_MIRROR="http://repo-ck.com/x86_64"
+#REPO_CK_NAME="repo-ck"
 
 # Sets the interval with which the watchdog monitors for a new kernel
 WATCHDOG_INTERVAL="6h"
@@ -184,7 +186,7 @@ function load_config {
 
 
 function update_config {
-    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB MAXLOAD MAKEFLAGS REPO_CK_MIRROR WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 )
+    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB MAXLOAD MAKEFLAGS REPO_CK_MIRROR REPO_CK_NAME WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 )
 
     mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
     default_conf /home/$USER/.config/$program_name/$program_name.conf
@@ -224,7 +226,6 @@ function check_build_dir {
 function check_repo_ck {
     package_kernel="linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst"
     package_header="linux-ck-${subarch_name}headers-$latest_version-x86_64.pkg.tar.zst"
-
     if [ -n "USE_LOCAL_REPO" ] && [ -r $LOCAL_REPO/$package_kernel ]; then
        echo "found in local repo"
        return
@@ -236,12 +237,18 @@ function check_repo_ck {
 	curl_cmd="curl --head --fail --silent"
     kernel=$($curl_cmd  $REPO_CK_MIRROR/$package_kernel | grep 'HTTP/2 200')
     headers=$($curl_cmd $REPO_CK_MIRROR/$package_header | grep 'HTTP/2 200')
+
+    curl -sL $REPO_CK_MIRROR/$REPO_CK_NAME.db.tar.gz | tar xJ --one-top-level=/tmp/linux-ck-hashes
+    sha256sums=$(grep -REA1 "%(FILENAME|SHA256SUM)%" /tmp/linux-ck-hashes | sed 's/ --//g;s/%SHA256SUM%//g;s/%FILENAME%//g;s/\n//g')
+    rm -fr /tmp/linux-ck-hashes
+
     if [[ -n $kernel && $headers ]]; then
         echo "mirroring from $REPO_CK_MIRROR"
         cd $BUILD_DIR/linux-ck
         for package in $package_kernel $package_header; do
             curl -C - $REPO_CK_MIRROR/$package -o $package.remote
-            mv $package{.remote,}
+            sha256sum_check=$(echo $sha256sums | grep -Po '(?<='$package' -- )([^ ]*) \K(\S+)'| grep -Po '(?<=desc-)(\S+)')
+            [ `echo "$sha256sum_check $package.remote" | sha256sum --check - --status` ] || mv $package{.remote,}
         done
     fi
 }
