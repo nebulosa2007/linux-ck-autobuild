@@ -135,9 +135,17 @@ Options:
 
 
 function set_subarches {
-    message="Use tab for select desired arch. Default is Generic-x86-64. See: https://wiki.archlinux.org/index.php/Repo-ck"
-    archs=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo $message" --preview-window=wrap | cut -d'.' -f1 | tr -d '\n')
-    sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=('"${archs[*]}"' )/g' /home/$USER/.config/$program_name/$program_name.conf
+	list_arch=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2)
+    message="Default is Generic-x86-64 (#39). See: https://wiki.archlinux.org/index.php/Repo-ck for more info"
+	if [ -x "(command -v fzf)" ]; then
+	    archs=$(echo $list_arch | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo Use tab for select desired arches. $message" --preview-window=wrap | cut -d'.' -f1 | tr -d '\n')
+    else
+        echo $list_arch | sed -E 's/ ([0-9]+)\./\n\1\./g'
+        echo -e "\n$message\n"
+        archs=" 39 "
+        read -rp "Write numbers of desired arches above, space separated:" -e -i "${archs}" archs
+    fi
+    sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=('"${archs[*]}"')/g' /home/$USER/.config/$program_name/$program_name.conf
 	echo "Config updated!"
 	exit 1
 }
