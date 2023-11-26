@@ -253,8 +253,12 @@ function main_program {
 
     sed -i '/^build().*/a MAKEFLAGS="'$makeflags'"' $BUILD_DIR/linux-ck/PKGBUILD
     for element in "${SUBARCH[@]}"; do
+
         subarch_name="arch_$element"
         [ "${!subarch_name}" != "" ] && subarch_name="-"${!subarch_name} || subarch_name=${!subarch_name}
+
+        logfile=$BUILD_DIR/linux-ck$subarch_name-$latest_version.log
+
         found=$(check_repo_ck)
         if [ -z "$found" ]; then
             if [ -z "$USE_MODPROBE_DB" ]; then
@@ -265,13 +269,13 @@ function main_program {
             fi
             sed -i '/_subarch=/c\_subarch='$element'' $BUILD_DIR/linux-ck/PKGBUILD
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name-$latest_version"
-            (cd $BUILD_DIR/linux-ck && makepkg -sC ) > $BUILD_DIR/linux-ck/linux-ck$subarch_name-$latest_version.log
+            (cd $BUILD_DIR/linux-ck && makepkg -sC ) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name-$latest_version"
 		else
-			echo "$(date +"%Y-%m-%d_%H:%M") Kernel linux-ck$subarch_name-$latest_version $found" > $BUILD_DIR/linux-ck/linux-ck$subarch_name-$latest_version.log
+			echo "$(date +"%Y-%m-%d_%H:%M") Kernel linux-ck$subarch_name-$latest_version $found" > $logfile
         fi
     done
-    echo "$latest_version" > $BUILD_DIR/linux-ck/.last_build
+    echo "$latest_version" > $BUILD_DIR/.last_build
     update_repo
 }
 
