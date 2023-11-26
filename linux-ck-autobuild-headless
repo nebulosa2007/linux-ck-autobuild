@@ -227,11 +227,11 @@ function check_repo_ck {
 
     if [ -n "USE_LOCAL_REPO" ] && [ -r $LOCAL_REPO/$package_kernel ]; then
        echo "Selected subarch found in local repo"
-       return "found in local repo"
+       return
     fi
     if [ -r $BUILD_DIR/$package_kernel ]; then
        echo "Selected subarch found in build dir"
-       return "found in build dir"
+       return
     fi
 	curl_cmd="curl --head --fail --silent"
     kernel=$($curl_cmd  $REPO_CK_MIRROR/$package_kernel | grep 'HTTP/2 200')
@@ -243,11 +243,7 @@ function check_repo_ck {
             curl -C - $REPO_CK_MIRROR/$package -o $package.remote
             mv $package{.remote,}
         done
-        return "found on remote repo"
-    else
-        echo "Selected subarch not available in $REPO_CK_MIRROR"
     fi
-    return ''
 }
 
 
