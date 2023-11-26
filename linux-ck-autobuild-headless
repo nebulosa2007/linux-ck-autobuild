@@ -222,25 +222,32 @@ function check_build_dir {
 
 
 function check_repo_ck {
-    curl_cmd="curl --head --fail --silent"
-    kernel=$($curl_cmd  $REPO_CK_MIRROR/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst | grep 'HTTP/2 200')
-    headers=$($curl_cmd $REPO_CK_MIRROR/linux-ck-${subarch_name}headers-$latest_version-x86_64.pkg.tar.zst | grep 'HTTP/2 200')
+    package_kernel="linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst"
+    package_header="linux-ck-${subarch_name}headers-$latest_version-x86_64.pkg.tar.zst"
+
+    if [ -n "USE_LOCAL_REPO" ] && [ -r $LOCAL_REPO/$package_kernel ]; then
+       echo "Selected subarch found in local repo"
+       return "found in local repo"
+    fi
+    if [ -r $BUILD_DIR/$package_kernel ]; then
+       echo "Selected subarch found in build dir"
+       return "found in build dir"
+    fi
+	curl_cmd="curl --head --fail --silent"
+    kernel=$($curl_cmd  $REPO_CK_MIRROR/$package_kernel | grep 'HTTP/2 200')
+    headers=$($curl_cmd $REPO_CK_MIRROR/$package_header | grep 'HTTP/2 200')
     if [[ -n $kernel && $headers ]]; then
-        if [ -n "USE_LOCAL_REPO" ] && [ -r $LOCAL_REPO/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst ]; then
-            echo "Selected subarch found in local repo"
-            return
-        fi
-        if [ -r $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst ]; then
-            echo "Selected subarch found in build dir"
-        else
-            echo "Mirroring selected subarch from $REPO_CK_MIRROR..."
-            cd $BUILD_DIR/linux-ck
-            curl -O -C - $REPO_CK_MIRROR/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst
-            curl -O -C - $REPO_CK_MIRROR/linux-ck-${subarch_name}headers-$latest_version-x86_64.pkg.tar.zst
-        fi
+        echo "Mirroring selected subarch from $REPO_CK_MIRROR..."
+        cd $BUILD_DIR/linux-ck
+        for package in $package_kernel $package_header; do
+            curl -C - $REPO_CK_MIRROR/$package -o $package.remote
+            mv $package{.remote,}
+        done
+        return "found on remote repo"
     else
         echo "Selected subarch not available in $REPO_CK_MIRROR"
     fi
+    return ''
 }
 
 
@@ -256,10 +263,8 @@ function main_program {
     for element in "${SUBARCH[@]}"; do
         subarch_name="arch_$element"
         [ "${!subarch_name}" != "" ] && subarch_name=${!subarch_name}"-" || subarch_name=${!subarch_name}
-        check_repo_ck
-        if [ -r $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version-x86_64.pkg.tar.zst ]; then
-            echo "$(date +"%Y-%m-%d_%H:%M") Kernel fetched from repo-ck $subarch_name$latest_version" > $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version.log
-        else
+        found=$(check_repo_ck)
+        if [ -z $found ]; then
             if [ -z "$USE_MODPROBE_DB" ]; then
                 sed -i '/pkgbase=/c\pkgbase=linux-ck-'${subarch_name%-}'' $BUILD_DIR/linux-ck/PKGBUILD
             else
@@ -270,6 +275,8 @@ function main_program {
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build $subarch_name$latest_version"
             (cd $BUILD_DIR/linux-ck && makepkg -sC ) > $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version.log
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $subarch_name$latest_version"
+		else
+			echo "$(date +"%Y-%m-%d_%H:%M") Kernel $subarch_name$latest_version $found" > $BUILD_DIR/linux-ck/linux-ck-$subarch_name$latest_version.log
         fi
     done
     echo "$latest_version" > $BUILD_DIR/linux-ck/.last_build
