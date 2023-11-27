@@ -4,7 +4,7 @@
 # License: GPL3
 # About: This script will automatically build specified ck kernels on a headless machines.
 # Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
-VERSION=0.6.3
+VERSION=0.6.4
 
 program_name="linux-ck-autobuild"
 
@@ -61,7 +61,7 @@ EOF
 
 function default_conf {
     cat << EOF > $1
-CONFIG_VERSION=0.6.3
+CONFIG_VERSION=0.6.4
 # Preferred editor for editing settings.
 EDITOR="need_config"
 
@@ -71,8 +71,8 @@ BUILD_DIR="/home/$USER/.local/share/linux-ck-autobuild"
 # If you have a local repository and wish to automatically add completed builds to it you can enable it by
 # setting USE_LOCAL_REPO to "y", leave empty to disable.
 USE_LOCAL_REPO=""
-# location of your local repository and database. Don't add a slash at the end!
-# hint: to add repo in pacman.conf:
+# Location of your local repository and database. Don't add a slash at the end!
+# Hint: to add repo in pacman.conf:
 # [<LOCAL_REPO_NAME>]
 # SigLevel = Optional TrustAll
 # Server = file:///<LOCAL_REPO>
@@ -81,7 +81,7 @@ LOCAL_REPO_NAME="linux-ck"
 
 # List the sub architecture you want to build : ( 39 )
 # In case of multiple architectures separate them with a space like so: ( 39 43 44 )
-# Or use option -a for select from subarches list, see --help
+# Or use option -a for select from subarches list, see --help.
 SUBARCH=( 39 )
 
 # If you have the modprobe-db package installed and wish to use it, change to 'y' otherwise leave empty.
@@ -93,8 +93,11 @@ USE_MODPROBE_DB=""
 # Compile using clang rather than gcc, change to 'y' otherwise leave empty.
 USE_CLANG=""
 
-# Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends witch new module you need to compile
+# Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends witch new module you need to compile.
 AUTONO="N N N N N"
+
+# List of modules does not need to be compiled, space separated.
+NOMODULES=""
 
 # Select a repo-ck mirror to use when seeking for prebuilt packages (only one can be enabled).
 REPO_CK_MIRROR="https://mirror.lesviallon.fr/repo-ck/os/x86_64"
@@ -183,7 +186,7 @@ function load_config {
 
 
 function update_config {
-    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB USE_CLANG AUTOSELECTION REPO_CK_MIRROR REPO_CK_NAME WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 USE_KERNEL_COMPRESS_METHOD )
+    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB USE_CLANG AUTONO NOMODULES REPO_CK_MIRROR REPO_CK_NAME WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 USE_KERNEL_COMPRESS_METHOD )
 
     mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
     default_conf /home/$USER/.config/$program_name/$program_name.conf
@@ -272,6 +275,8 @@ function main_program {
 
         found=$(check_repo_ck)
         if [ -z "$found" ]; then
+
+            # PKGBUILD file
             if [ -z "$USE_MODPROBE_DB" ]; then
                 sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'' $BUILD_DIR/linux-ck/PKGBUILD
             else
@@ -282,10 +287,20 @@ function main_program {
             if [ -n "$USE_CLANG" ]; then
                 sed -i '/_clangbuild=/c\_clangbuild='$USE_CLANG'' $BUILD_DIR/linux-ck/PKGBUILD
             fi
+
+            # config file
             if [ -n "$USE_KERNEL_COMPRESS_METHOD" ]; then
                 sed -i 's/# CONFIG_KERNEL_'$USE_KERNEL_COMPRESS_METHOD' is not set/CONFIG_KERNEL_'$USE_KERNEL_COMPRESS_METHOD'=y/' $BUILD_DIR/linux-ck/config
                 sed -i 's/CONFIG_KERNEL_ZSTD=y/# CONFIG_KERNEL_ZSTD is not set/' $BUILD_DIR/linux-ck/config
             fi
+            if [ -n "$NOMODULES" ]; then
+                for module in $NOMODULES ; do
+                    echo "Masking module $i..."
+                    sed -i 's/'$module'=m/#'$module' is not set/' $BUILD_DIR/linux-ck/config
+                done
+            fi
+
+            # Compile kernel
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name-$latest_version"
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -sC )) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name-$latest_version"
