@@ -4,7 +4,7 @@
 # License: GPL3
 # About: This script will automatically build specified ck kernels on a headless machines.
 # Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
-VERSION=0.6.2
+VERSION=0.6.3
 
 program_name="linux-ck-autobuild"
 
@@ -61,7 +61,7 @@ EOF
 
 function default_conf {
     cat << EOF > $1
-CONFIG_VERSION=0.6.2
+CONFIG_VERSION=0.6.3
 # Preferred editor for editing settings.
 EDITOR="need_config"
 
@@ -109,6 +109,11 @@ WATCHDOG_INTERVAL="6h"
 USER_COMMAND1=""
 USER_COMMAND2=""
 USER_COMMAND3=""
+
+# LOW RAM SPECIFIC SETTINGS ONLY
+# When compile kernel on a machine with low RAM, like VPS, default compressor ZSTD doesn't compress kernel
+# with RAM less than 1Gb, you should choose another compressor - GZIP, BZIP2, LZMA, XZ (recommended), LZO, LZ4
+USE_KERNEL_COMPRESS_METHOD=""
 EOF
 }
 
@@ -130,8 +135,8 @@ Options:
 
 function set_subarches {
     message="Default is Generic-x86-64 - number 39. See: https://wiki.archlinux.org/index.php/Repo-ck for more info"
-	if [ -x "$(command -v fzf)" ]; then
-	    archs=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | tr -d '\n')
+    if [ -x "$(command -v fzf)" ]; then
+        archs=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | tr -d '\n')
     else
         cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2
         echo -e "\n$message\n"
@@ -140,9 +145,9 @@ function set_subarches {
     fi
     if [ -n "$archs" ]; then
         sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=('"${archs[*]}"')/g' /home/$USER/.config/$program_name/$program_name.conf
-	    echo "Config updated!"
-	fi
-	exit 1
+        echo "Config updated!"
+    fi
+    exit 1
 }
 
 
@@ -178,7 +183,7 @@ function load_config {
 
 
 function update_config {
-    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB USE_CLANG AUTOSELECTION REPO_CK_MIRROR REPO_CK_NAME WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 )
+    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB USE_CLANG AUTOSELECTION REPO_CK_MIRROR REPO_CK_NAME WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 USE_KERNEL_COMPRESS_METHOD )
 
     mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
     default_conf /home/$USER/.config/$program_name/$program_name.conf
@@ -230,7 +235,7 @@ function check_repo_ck {
        echo "found in build dir"
        return
     fi
-	curl_cmd="curl --head --fail --silent"
+    curl_cmd="curl --head --fail --silent"
     kernel=$($curl_cmd  $REPO_CK_MIRROR/$package_kernel | grep 'HTTP/2 200')
     headers=$($curl_cmd $REPO_CK_MIRROR/$package_header | grep 'HTTP/2 200')
 
@@ -277,11 +282,15 @@ function main_program {
             if [ -n "$USE_CLANG" ]; then
                 sed -i '/_clangbuild=/c\_clangbuild='$USE_CLANG'' $BUILD_DIR/linux-ck/PKGBUILD
             fi
+            if [ -n "$USE_KERNEL_COMPRESS_METHOD" ]; then
+                sed -i 's/# CONFIG_KERNEL_'$USE_KERNEL_COMPRESS_METHOD' is not set/CONFIG_KERNEL_'$USE_KERNEL_COMPRESS_METHOD'=y/' $BUILD_DIR/linux-ck/config
+                sed -i 's/CONFIG_KERNEL_ZSTD=y/# CONFIG_KERNEL_ZSTD is not set/' $BUILD_DIR/linux-ck/config
+            fi
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name-$latest_version"
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -sC )) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name-$latest_version"
-		else
-			echo "$(date +"%Y-%m-%d_%H:%M") Kernel linux-ck$subarch_name-$latest_version $found" > $logfile
+            else
+                echo "$(date +"%Y-%m-%d_%H:%M") Kernel linux-ck$subarch_name-$latest_version $found" > $logfile
         fi
     done
     echo "$latest_version" > $BUILD_DIR/.last_build
