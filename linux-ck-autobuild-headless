@@ -208,6 +208,10 @@ function check_build_dir {
         mkdir -p $BUILD_DIR
         echo "Cloning AUR package"
         git -C $BUILD_DIR clone https://aur.archlinux.org/linux-ck.git --quiet
+        # Adding gpg keys
+        sudo pacman-key -r 5EE46C4C --keyserver keyserver.ubuntu.com && sudo pacman-key --lsign-key 5EE46C4C # Graysky
+        gpg --recv-keys 79BE3E4300411886 # Linus Torvalds
+        gpg --recv-keys 38DBBDC86092693E # Greg Kroah-Hartman
     fi
 }
 
