@@ -295,13 +295,13 @@ function main_program {
             fi
             if [ -n "$NOMODULES" ]; then
                 for module in $NOMODULES ; do
-                    echo "Masking module $i..."
                     sed -i 's/'$module'=m/#'$module' is not set/' $BUILD_DIR/linux-ck/config
                 done
             fi
 
             # Compile kernel
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name-$latest_version"
+            echo -e "Settings are:\nModprobe: $USE_MODPROBE_DB\nCLANG: $USE_CLANG\nCompress method:$USE_KERNEL_COMPRESS_METHOD\nModules to not compile:$NOMODULES\n"
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -sC )) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name-$latest_version"
             else
