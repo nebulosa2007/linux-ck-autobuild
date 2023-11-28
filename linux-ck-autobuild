@@ -288,6 +288,9 @@ function main_program {
             if [ -n "$USE_CLANG" ]; then
                 sed -i '/_clangbuild=/c\_clangbuild='$USE_CLANG'' $BUILD_DIR/linux-ck/PKGBUILD
             fi
+            for patch in $( ls -1 $BUILD_DIR/*.patch | sort -r ) ; do
+                sed -i '/  diff -u ..\/config .config || :/c\  diff -u ..\/config .config || :\n\n  patch -Np1 < "..\/..\/..\/'$(basename $patch)'"' $BUILD_DIR/linux-ck/PKGBUILD
+            done
 
             # config file
             if [ -n "$USE_KERNEL_COMPRESS_METHOD" ]; then
