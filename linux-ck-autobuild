@@ -244,11 +244,12 @@ function check_repo_ck {
     kernel=$($curl_cmd  $REPO_CK_MIRROR/$package_kernel | grep 'HTTP/2 200')
     headers=$($curl_cmd $REPO_CK_MIRROR/$package_header | grep 'HTTP/2 200')
 
-    curl -sL $REPO_CK_MIRROR/$REPO_CK_NAME.db.tar.gz | tar xJ --one-top-level=/tmp/linux-ck-hashes
-    sha256sums=$(grep -REA1 "%(FILENAME|SHA256SUM)%" /tmp/linux-ck-hashes | sed 's/ --//g;s/%SHA256SUM%//g;s/%FILENAME%//g;s/\n//g')
-    rm -fr /tmp/linux-ck-hashes
-
     if [[ -n $kernel && $headers ]]; then
+        #Get sha256sums
+        curl -sL $REPO_CK_MIRROR/$REPO_CK_NAME.db.tar.gz | tar xJ --one-top-level=/tmp/linux-ck-hashes
+        sha256sums=$(grep -REA1 "%(FILENAME|SHA256SUM)%" /tmp/linux-ck-hashes | sed 's/ --//g;s/%SHA256SUM%//g;s/%FILENAME%//g;s/\n//g')
+        rm -fr /tmp/linux-ck-hashes
+
         echo "mirroring from $REPO_CK_MIRROR"
         cd $BUILD_DIR/linux-ck
         for package in $package_kernel $package_header; do
