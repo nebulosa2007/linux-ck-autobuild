@@ -49,10 +49,10 @@ arch_35="rocketlake"     #  35. Intel Rocket Lake (MROCKETLAKE) (NEW)
 arch_36="alderlake"      #  36. Intel Alder Lake (MALDERLAKE) (NEW)
 arch_37="raptorlake"     #  37. Intel Raptor Lake (MRAPTORLAKE) (NEW)
 arch_38="meteorlake"     #  38. Intel Meteor Lake (MMETEORLAKE) (NEW)
-arch_39=""                #  39. Generic-x86-64 (GENERIC_CPU) (DEFAULT)
-arch_40="generic-v2"      #  40. Generic-x86-64-v2 (GENERIC_CPU2) (NEW)
-arch_41="generic-v3"      #  41. Generic-x86-64-v3 (GENERIC_CPU3) (NEW)
-arch_42="generic-v4"      #  42. Generic-x86-64-v4 (GENERIC_CPU4) (NEW)
+arch_39=""               #  39. Generic-x86-64 (GENERIC_CPU) (DEFAULT)
+arch_40="generic-v2"     #  40. Generic-x86-64-v2 (GENERIC_CPU2) (NEW)
+arch_41="generic-v3"     #  41. Generic-x86-64-v3 (GENERIC_CPU3) (NEW)
+arch_42="generic-v4"     #  42. Generic-x86-64-v4 (GENERIC_CPU4) (NEW)
 arch_43="native_intel"   #  43. Intel-Native optimizations autodetected by the compiler (MNATIVE_INTEL) (NEW)
 arch_44="native_amd"     #  44. AMD-Native optimizations autodetected by the compiler (MNATIVE_AMD) (NEW)
 EOF
@@ -219,10 +219,12 @@ function check_build_dir {
         mkdir -p $BUILD_DIR
         echo "Cloning AUR package"
         git -C $BUILD_DIR clone https://aur.archlinux.org/linux-ck.git --quiet
-        # Adding gpg keys
+        echo "Adding pgp keys"
         sudo pacman-key -r 5EE46C4C --keyserver keyserver.ubuntu.com && sudo pacman-key --lsign-key 5EE46C4C # Graysky
         gpg --recv-keys 79BE3E4300411886 # Linus Torvalds
         gpg --recv-keys 38DBBDC86092693E # Greg Kroah-Hartman
+        echo "Install dependencies"
+        sudo pacman -Syu --needed bc cpio gettext libelf pahole python perl tar xz $([ -n "$USE_CLANG" ] && echo "clang llvm lld")
     fi
 }
 
@@ -302,7 +304,7 @@ function main_program {
             # Compile kernel
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name-$latest_version"
             echo -e "Settings are:\nModprobe: $USE_MODPROBE_DB\nCLANG: $USE_CLANG\nCompress method:$USE_KERNEL_COMPRESS_METHOD\nModules to not compile:$NOMODULES\n"
-            ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -sC )) > $logfile
+            ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -C )) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name-$latest_version"
             else
                 echo "$(date +"%Y-%m-%d_%H:%M") Kernel linux-ck$subarch_name-$latest_version $found" > $logfile
