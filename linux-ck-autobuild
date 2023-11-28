@@ -295,11 +295,18 @@ function main_program {
             if [ -n "$USE_KERNEL_COMPRESS_METHOD" ]; then
                 sed -i 's/# CONFIG_KERNEL_'$USE_KERNEL_COMPRESS_METHOD' is not set/CONFIG_KERNEL_'$USE_KERNEL_COMPRESS_METHOD'=y/' $BUILD_DIR/linux-ck/config
                 sed -i 's/CONFIG_KERNEL_ZSTD=y/# CONFIG_KERNEL_ZSTD is not set/' $BUILD_DIR/linux-ck/config
+                editconfig="y"
             fi
             if [ -n "$NOMODULES" ]; then
                 for module in $NOMODULES ; do
                     sed -i 's/'$module'=m/#'$module' is not set/' $BUILD_DIR/linux-ck/config
                 done
+                editconfig="y"
+            fi
+            if [ -n "editconfig" ]; then
+                oldsha256sum=$(grep -A2 'sha256sums' $BUILD_DIR/linux-ck/PKGBUILD | tail -1 | cut -d"'" -f2)
+                newsha256sum=$(sha256sum $BUILD_DIR/linux-ck/config | cut -d" " -f1)
+                sed -i 's/'$oldsha256sum'/'$newsha256sum'/' $BUILD_DIR/linux-ck/PKGBUILD
             fi
 
             # Compile kernel
