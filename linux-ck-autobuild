@@ -136,6 +136,17 @@ Options:
 }
 
 
+function edit_config {
+    if [ -f /usr/bin/$EDITOR ]; then
+        $EDITOR /home/$USER/.config/$program_name/$program_name.conf
+        .       /home/$USER/.config/$program_name/$program_name.conf
+    else
+        echo -e "No editor found, please set your editor in:\n/home/$USER/.config/$program_name/$program_name.conf"
+    fi
+    exit 1
+}
+
+
 function set_subarches {
     message="Default is Generic-x86-64 - number 39. See: https://wiki.archlinux.org/index.php/Repo-ck for more info"
     if [ -x "$(command -v fzf)" ]; then
@@ -154,37 +165,6 @@ function set_subarches {
 }
 
 
-function edit_config {
-    if [ -f /usr/bin/$EDITOR ]; then
-        $EDITOR /home/$USER/.config/$program_name/$program_name.conf
-        .       /home/$USER/.config/$program_name/$program_name.conf
-    else
-        echo -e "No editor found, please set your editor in:\n/home/$USER/.config/$program_name/$program_name.conf"
-    fi
-    exit 1
-}
-
-
-function load_config {
-    if [ -r /home/$USER/.config/$program_name/$program_name.conf ]; then
-        .   /home/$USER/.config/$program_name/$program_name.conf
-    if [ "$CONFIG_VERSION" == "$VERSION" ]; then
-        if [[ -z $EDITOR || -z $BUILD_DIR || -z $SUBARCH ]]; then
-            echo "ERROR: One or more settings are missing, please check your configuration." && exit 1
-        fi
-        else
-            subarches /home/$USER/.config/$program_name/subarches
-            update_config
-    fi
-    else
-       mkdir -p     /home/$USER/.config/$program_name/
-       default_conf /home/$USER/.config/$program_name/$program_name.conf
-       subarches    /home/$USER/.config/$program_name/subarches
-       edit_config
-    fi
-}
-
-
 function update_config {
     UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB USE_CLANG AUTONO NOMODULES REPO_CK_MIRROR REPO_CK_NAME WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 USE_KERNEL_COMPRESS_METHOD )
 
@@ -197,7 +177,26 @@ function update_config {
 
     sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=( '"${SUBARCH[*]}"' )/g' /home/$USER/.config/$program_name/$program_name.conf
     echo "Config updated!"
-    exit 1
+}
+
+
+function load_config {
+    if [ -r /home/$USER/.config/$program_name/$program_name.conf ]; then
+        .   /home/$USER/.config/$program_name/$program_name.conf
+        if [ "$CONFIG_VERSION" == "$VERSION" ]; then
+            if [[ -z $EDITOR || -z $BUILD_DIR || -z $SUBARCH ]]; then
+                echo "ERROR: One or more settings are missing, please check your configuration." && exit 1
+            fi
+        else
+            subarches /home/$USER/.config/$program_name/subarches
+            update_config
+        fi
+    else
+        mkdir -p     /home/$USER/.config/$program_name/
+        default_conf /home/$USER/.config/$program_name/$program_name.conf
+        subarches    /home/$USER/.config/$program_name/subarches
+        edit_config
+    fi
 }
 
 
@@ -262,7 +261,6 @@ function check_repo_ck {
 
 
 function main_program {
-    load_config
     check_build_dir
     . /home/$USER/.config/$program_name/subarches
 
@@ -322,14 +320,19 @@ function main_program {
     update_repo
 }
 
+
+load_config
+
+
 if [ -n "$1" ]; then
     case "$1" in
     -h | --help ) print_help ;;
-    -c          ) load_config && edit_config ;;
-    -a          ) load_config && set_subarches; exit 1 ;;
+    -c          ) edit_config ;;
+    -a          ) set_subarches;;
      *          ) echo "Option not found, try -h or --help" && exit 1 ;;
     esac
 fi
+
 
 main_program
 $USER_COMMAND1
