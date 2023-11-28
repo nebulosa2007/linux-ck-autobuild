@@ -26,6 +26,6 @@ The minimum options you'll have to modify will be the SUBARCH (the micro archite
 
 If you want to fully automate the build script you can enable the daemon by running:
 
-``sudo systemctl enable linux-ck-autobuild@$USER.service``
+``sudo systemctl enable linux-ck-autobuild@$USER.timer``
 
 The configuration can be accessed at any time by running ``linux-ck-autobuild -c`` from a command line.
