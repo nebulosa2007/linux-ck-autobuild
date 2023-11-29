@@ -260,6 +260,11 @@ function check_repo_ck {
 }
 
 
+function pp {
+	[ -n "$1" ] && echo "$2" || echo "$3"
+}
+
+
 function main_program {
     check_build_dir
     . /home/$USER/.config/$program_name/subarches
@@ -312,7 +317,11 @@ function main_program {
 
             # Compile kernel
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name-$latest_version"
-            echo -e "Settings are:\nModprobe: $USE_MODPROBE_DB\nCLANG: $USE_CLANG\nCompress method:$USE_KERNEL_COMPRESS_METHOD\nModules to not compile:$NOMODULES\n"
+            echo "Compile parameters are:
+  Modprobed-db"$(pp ${USE_MODPROBE_DB} ": ${HOME}/.config/modprobed.db" ": No")"
+  CLANG"$(pp ${USE_CLANG} ": Yes" ": No")"
+  Compress method"$(pp ${USE_KERNEL_COMPRESS_METHOD} ": ${USE_KERNEL_COMPRESS_METHOD}" ": ZSTD (default)")"
+  Modules to not compile"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -C )) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name-$latest_version"
             else
