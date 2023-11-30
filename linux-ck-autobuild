@@ -219,8 +219,13 @@ function update_repo {
 function check_build_dir {
     if [ -r $BUILD_DIR/linux-ck/PKGBUILD ]; then
         git -C $BUILD_DIR/linux-ck reset --hard --quiet
-        git -C $BUILD_DIR/linux-ck pull --quiet
-        [ -n "$NEEDED_VERSION" ] && cd $BUILD_DIR/linux-ck && git checkout $(echo ${NEEDED_VERSION%:*})
+        cd $BUILD_DIR/linux-ck
+        if [ -n "$NEEDED_VERSION" ]; then
+            git -c advice.detachedHead=false checkout $(echo ${NEEDED_VERSION%:*})
+        else
+            git checkout --quiet master
+            git -C $BUILD_DIR/linux-ck pull --quiet
+        fi
     else
         echo "PKGBUILD not found at configured location, seting up..."
         mkdir -p $BUILD_DIR
