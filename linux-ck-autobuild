@@ -220,7 +220,7 @@ function check_build_dir {
     if [ -r $BUILD_DIR/linux-ck/PKGBUILD ]; then
         git -C $BUILD_DIR/linux-ck reset --hard --quiet
         git -C $BUILD_DIR/linux-ck pull --quiet
-        [ -n $NEEDED_VERSION ] && { cd $BUILD_DIR/linux-ck && git checkout $(echo ${NEEDED_VERSION%:*}); }
+        [ -n "$NEEDED_VERSION" ] && cd $BUILD_DIR/linux-ck && git checkout $(echo ${NEEDED_VERSION%:*})
     else
         echo "PKGBUILD not found at configured location, seting up..."
         mkdir -p $BUILD_DIR
@@ -277,7 +277,7 @@ function main_program {
     check_build_dir
     . /home/$USER/.config/$program_name/subarches
 
-    latest_version=$([ -n $NEEDED_VERSION ] && echo ${NEEDED_VERSION#*:} || curl -s https://aur.archlinux.org/packages/linux-ck | grep -Po '(?<=linux-ck ).*(?=</h2)')
+    latest_version=$([ -n "$NEEDED_VERSION" ] && echo ${NEEDED_VERSION#*:} || curl -s https://aur.archlinux.org/packages/linux-ck | grep -Po '(?<=linux-ck ).*(?=</h2)')
     [ "$latest_version" == "" ] && { echo "Error: latest version not defined from AUR. Check settings or connection!"; exit 1; }
 
     for element in "${SUBARCH[@]}"; do
