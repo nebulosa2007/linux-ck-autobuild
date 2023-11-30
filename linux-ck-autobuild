@@ -4,7 +4,7 @@
 # License: GPL3
 # About: This script will automatically build specified ck kernels on a headless machines.
 # Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
-VERSION=0.6.4
+VERSION=0.6.5
 
 program_name="linux-ck-autobuild"
 
@@ -61,7 +61,7 @@ EOF
 
 function default_conf {
     cat << EOF > $1
-CONFIG_VERSION=0.6.4
+CONFIG_VERSION=0.6.5
 # Preferred editor for editing settings.
 EDITOR="need_config"
 
@@ -113,9 +113,12 @@ USER_COMMAND1=""
 USER_COMMAND2=""
 USER_COMMAND3=""
 
+# DEPRECATED since kernel version 5.1, that contains BTF Format and required abobe 10Gb (!) of RAM+SWAP
 # LOW RAM SPECIFIC SETTINGS ONLY
 # When compile kernel on a machine with low RAM, like VPS, default compressor ZSTD doesn't compress kernel
-# with RAM less than 1Gb, you should choose another compressor - GZIP, BZIP2, LZMA, XZ (recommended), LZO, LZ4
+# with RAM less than 1Gb.
+
+# You can choose another compressor - GZIP, BZIP2, LZMA, XZ, LZO, LZ4 rather default - ZSTD
 USE_KERNEL_COMPRESS_METHOD=""
 EOF
 }
