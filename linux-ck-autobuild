@@ -4,7 +4,7 @@
 # License: GPL3
 # About: This script will automatically build specified ck kernels on a headless machines.
 # Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
-VERSION=0.6.5
+VERSION=0.6.6
 
 program_name="linux-ck-autobuild"
 
@@ -61,7 +61,7 @@ EOF
 
 function default_conf {
     cat << EOF > $1
-CONFIG_VERSION=0.6.5
+CONFIG_VERSION=0.6.6
 # Preferred editor for editing settings.
 EDITOR="need_config"
 
@@ -120,6 +120,10 @@ USER_COMMAND3=""
 
 # You can choose another compressor - GZIP, BZIP2, LZMA, XZ, LZO, LZ4 rather default - ZSTD
 USE_KERNEL_COMPRESS_METHOD=""
+
+# For selecting another version of kernel. Format "git_commit:version, e.g. 'bb1d3c5:6.6'
+# Use 'git log --oneline' in BUILD_DIR for list them"
+NEEDED_VERSION=""
 EOF
 }
 
@@ -169,7 +173,7 @@ function set_subarches {
 
 
 function update_config {
-    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB USE_CLANG AUTONO NOMODULES REPO_CK_MIRROR REPO_CK_NAME WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 USE_KERNEL_COMPRESS_METHOD )
+    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB USE_CLANG AUTONO NOMODULES REPO_CK_MIRROR REPO_CK_NAME WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 USE_KERNEL_COMPRESS_METHOD NEEDED_VERSION)
 
     mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
     default_conf /home/$USER/.config/$program_name/$program_name.conf
@@ -216,6 +220,7 @@ function check_build_dir {
     if [ -r $BUILD_DIR/linux-ck/PKGBUILD ]; then
         git -C $BUILD_DIR/linux-ck reset --hard --quiet
         git -C $BUILD_DIR/linux-ck pull --quiet
+        [ -z $NEEDED_VERSION ] && { cd $BUILD_DIR && git checkout $(echo ${NEEDED_VERSION%:*}); }
     else
         echo "PKGBUILD not found at configured location, seting up..."
         mkdir -p $BUILD_DIR
@@ -272,7 +277,7 @@ function main_program {
     check_build_dir
     . /home/$USER/.config/$program_name/subarches
 
-    latest_version=$(curl -s https://aur.archlinux.org/packages/linux-ck | grep -Po '(?<=linux-ck ).*(?=</h2)')
+    latest_version=$([ -z $NEEDED_VERSION ] && echo ${NEEDED_VERSION#*:} || curl -s https://aur.archlinux.org/packages/linux-ck | grep -Po '(?<=linux-ck ).*(?=</h2)')
     [ "$latest_version" == "" ] && { echo "Error: latest version not defined from AUR. Check settings or connection!"; exit 1; }
 
     for element in "${SUBARCH[@]}"; do
