@@ -94,7 +94,7 @@ USE_MODPROBE_DB=""
 USE_CLANG=""
 
 # Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends witch new module you need to compile.
-AUTONO="N N N N N"
+AUTONO="N,N,N,N,N"
 
 # List of modules does not need to be compiled, space separated.
 NOMODULES=""
@@ -157,15 +157,15 @@ function edit_config {
 function set_subarches {
     message="Default is Generic-x86-64 - number 39. See: https://wiki.archlinux.org/index.php/Repo-ck for more info"
     if [ -x "$(command -v fzf)" ]; then
-        archs=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | tr -d '\n')
+        archs=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | sed 's/  / /g'| tr -d '\n' )
     else
         cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2
         echo -e "\n$message\n"
-        archs=" 39 "
+        archs=" 39"
         read -rp "Write numbers of desired arches above, space separated:" -e -i "${archs}" archs
     fi
     if [ -n "$archs" ]; then
-        sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=('"${archs[*]}"')/g' /home/$USER/.config/$program_name/$program_name.conf
+        sed -i '/^#/!s|SUBARCH=(.*)|SUBARCH=('"${archs[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
         echo "Config updated!"
     fi
     exit 1
@@ -182,7 +182,7 @@ function update_config {
         sed -i '/^#/!s|'$element'=".*"|'$element'="'${!element}'"|g' /home/$USER/.config/$program_name/$program_name.conf
     done
 
-    sed -i '/^#/!s/SUBARCH=(.*)/SUBARCH=( '"${SUBARCH[*]}"' )/g' /home/$USER/.config/$program_name/$program_name.conf
+    sed -i '/^#/!s|SUBARCH=(.*)|SUBARCH=( '"${SUBARCH[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
     echo "Config updated!"
 }
 
@@ -335,7 +335,7 @@ function main_program {
   CLANG"$(pp ${USE_CLANG} ": Yes" ": No")"
   Compress method"$(pp ${USE_KERNEL_COMPRESS_METHOD} ": ${USE_KERNEL_COMPRESS_METHOD}" ": ZSTD (default)")"
   Modules to not compile"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
-            ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -C )) > $logfile
+            ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ',' '\n' | makepkg -C )) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name-$latest_version"
             else
                 echo "$(date +"%Y-%m-%d_%H:%M") Kernel linux-ck$subarch_name-$latest_version $found" > $logfile
