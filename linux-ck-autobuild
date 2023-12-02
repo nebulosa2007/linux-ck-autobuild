@@ -71,7 +71,7 @@ EDITOR="need_config"
 # Sets the interval with which the systemd monitors for a new kernel.
 OnCalendar="6h"
 
-# For selecting another version of kernel. Format 'git_commit:version', e.g. 'bb1d3c5:6.6-1'
+# For selecting another version of kernel. Format 'git_commit:version', e.g. 'bb1d3c5:6.6-2'
 # Use 'git log --oneline' in BUILD_DIR to list them
 NEEDED_VERSION=""
 
@@ -203,6 +203,8 @@ function load_config {
         if [ "$CONFIG_VERSION" == "$VERSION" ]; then
             if [[ -z $EDITOR || -z $BUILD_DIR || -z $subarch ]]; then
                 echo "ERROR: One or more settings are missing, please check your configuration." && exit 1
+                sleep 3
+                edit_config
             fi
         else
             subarches /home/$USER/.config/$program_name/subarches
