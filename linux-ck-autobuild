@@ -340,9 +340,9 @@ function main_program {
             else
                 echo "$(date +"%Y-%m-%d_%H:%M") Kernel linux-ck$subarch_name-$latest_version $found" > $logfile
         fi
+        update_repo
     done
     echo "$latest_version" > $BUILD_DIR/.last_build
-    update_repo
 }
 
 
