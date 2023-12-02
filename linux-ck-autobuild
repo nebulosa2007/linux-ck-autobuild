@@ -4,69 +4,101 @@
 # License: GPL3
 # About: This script will automatically build specified ck kernels on a headless machines.
 # Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
-VERSION=0.6.5
+
 
 program_name="linux-ck-autobuild"
 
 
 function subarches {
     cat << EOF > $1
-arch_1="k8"              #  1. AMD Opteron/Athlon64/Hammer/K8 (MK8)
-arch_2="k8sse3"          #  2. AMD Opteron/Athlon64/Hammer/K8 with SSE3 (MK8SSE3) (NEW)
-arch_3="k10"             #  3. AMD 61xx/7x50/PhenomX3/X4/II/K10 (MK10) (NEW)
-arch_4="barcelona"       #  4. AMD Barcelona (MBARCELONA) (NEW)
-arch_5="bobcat"          #  5. AMD Bobcat (MBOBCAT) (NEW)
-arch_6="jaguar"          #  6. AMD Jaguar (MJAGUAR) (NEW)
-arch_7="bulldozer"       #  7. AMD Bulldozer (MBULLDOZER) (NEW)
-arch_8="piledriver"      #  8. AMD Piledriver (MPILEDRIVER) (NEW)
-arch_9="steamroller"     #  9. AMD Steamroller (MSTEAMROLLER) (NEW)
-arch_10="excavator"      #  10. AMD Excavator (MEXCAVATOR) (NEW)
-arch_11="zen"            #  11. AMD Zen (MZEN) (NEW)
-arch_12="zen2"           #  12. AMD Zen 2 (MZEN2) (NEW)
-arch_13="zen3"           #  13. AMD Zen 3 (MZEN3) (NEW)
-arch_14="zen4"           #  14. AMD Zen 4 (MZEN4) (NEW)
-arch_15="psc"            #  15. Intel P4 / older Netburst based Xeon (MPSC)
-arch_16="core2"          #  16. Intel Core 2 (MCORE2)
-arch_17="atom"           #  17. Intel Atom (MATOM)
-arch_18="nehalem"        #  18. Intel Nehalem (MNEHALEM) (NEW)
-arch_19="westmere"       #  19. Intel Westmere (MWESTMERE) (NEW)
-arch_20="silvermont"     #  20. Intel Silvermont (MSILVERMONT) (NEW)
-arch_21="goldmont"       #  21. Intel Goldmont (MGOLDMONT) (NEW)
-arch_22="goldmontplus"   #  22. Intel Goldmont Plus (MGOLDMONTPLUS) (NEW)
-arch_23="sandybridge"    #  23. Intel Sandy Bridge (MSANDYBRIDGE) (NEW)
-arch_24="ivybridge"      #  24. Intel Ivy Bridge (MIVYBRIDGE) (NEW)
-arch_25="haswell"        #  25. Intel Haswell (MHASWELL) (NEW)
-arch_26="broadwell"      #  26. Intel Broadwell (MBROADWELL) (NEW)
-arch_27="skylake"        #  27. Intel Skylake (MSKYLAKE) (NEW)
-arch_28="skylakex"       #  28. Intel Skylake X (MSKYLAKEX) (NEW)
-arch_29="cannonlake"     #  29. Intel Cannon Lake (MCANNONLAKE) (NEW)
-arch_30="icelake"        #  30. Intel Ice Lake (MICELAKE) (NEW)
-arch_31="cascadelake"    #  31. Intel Cascade Lake (MCASCADELAKE) (NEW)
-arch_32="cooperlake"     #  32. Intel Cooper Lake (MCOOPERLAKE) (NEW)
-arch_33="tigerlake"      #  33. Intel Tiger Lake (MTIGERLAKE) (NEW)
-arch_34="sapphirerapids" #  34. Intel Sapphire Rapids (MSAPPHIRERAPIDS) (NEW)
-arch_35="rocketlake"     #  35. Intel Rocket Lake (MROCKETLAKE) (NEW)
-arch_36="alderlake"      #  36. Intel Alder Lake (MALDERLAKE) (NEW)
-arch_37="raptorlake"     #  37. Intel Raptor Lake (MRAPTORLAKE) (NEW)
-arch_38="meteorlake"     #  38. Intel Meteor Lake (MMETEORLAKE) (NEW)
-arch_39=""               #  39. Generic-x86-64 (GENERIC_CPU) (DEFAULT)
-arch_40="generic-v2"     #  40. Generic-x86-64-v2 (GENERIC_CPU2) (NEW)
-arch_41="generic-v3"     #  41. Generic-x86-64-v3 (GENERIC_CPU3) (NEW)
-arch_42="generic-v4"     #  42. Generic-x86-64-v4 (GENERIC_CPU4) (NEW)
-arch_43="native_intel"   #  43. Intel-Native optimizations autodetected by the compiler (MNATIVE_INTEL) (NEW)
-arch_44="native_amd"     #  44. AMD-Native optimizations autodetected by the compiler (MNATIVE_AMD) (NEW)
+arch_1="k8"              #  1. AMD Opteron/Athlon64/Hammer/K8
+arch_2="k8sse3"          #  2. AMD Opteron/Athlon64/Hammer/K8 with SSE3
+arch_3="k10"             #  3. AMD 61xx/7x50/PhenomX3/X4/II/K10
+arch_4="barcelona"       #  4. AMD Barcelona
+arch_5="bobcat"          #  5. AMD Bobcat
+arch_6="jaguar"          #  6. AMD Jaguar
+arch_7="bulldozer"       #  7. AMD Bulldozer
+arch_8="piledriver"      #  8. AMD Piledriver
+arch_9="steamroller"     #  9. AMD Steamroller
+arch_10="excavator"      #  10. AMD Excavator
+arch_11="zen"            #  11. AMD Zen
+arch_12="zen2"           #  12. AMD Zen 2
+arch_13="zen3"           #  13. AMD Zen 3
+arch_14="zen4"           #  14. AMD Zen 4
+arch_15="psc"            #  15. Intel P4 / older Netburst based Xeon
+arch_16="core2"          #  16. Intel Core 2
+arch_17="atom"           #  17. Intel Atom
+arch_18="nehalem"        #  18. Intel Nehalem
+arch_19="westmere"       #  19. Intel Westmere
+arch_20="silvermont"     #  20. Intel Silvermont
+arch_21="goldmont"       #  21. Intel Goldmont
+arch_22="goldmontplus"   #  22. Intel Goldmont Plus
+arch_23="sandybridge"    #  23. Intel Sandy Bridge
+arch_24="ivybridge"      #  24. Intel Ivy Bridge
+arch_25="haswell"        #  25. Intel Haswell
+arch_26="broadwell"      #  26. Intel Broadwell
+arch_27="skylake"        #  27. Intel Skylake
+arch_28="skylakex"       #  28. Intel Skylake X
+arch_29="cannonlake"     #  29. Intel Cannon Lake
+arch_30="icelake"        #  30. Intel Ice Lake
+arch_31="cascadelake"    #  31. Intel Cascade Lake
+arch_32="cooperlake"     #  32. Intel Cooper Lake
+arch_33="tigerlake"      #  33. Intel Tiger Lake
+arch_34="sapphirerapids" #  34. Intel Sapphire Rapids
+arch_35="rocketlake"     #  35. Intel Rocket Lake
+arch_36="alderlake"      #  36. Intel Alder Lake
+arch_37="raptorlake"     #  37. Intel Raptor Lake
+arch_38="meteorlake"     #  38. Intel Meteor Lake
+arch_39=""               #  39. Generic-x86-64    (DEFAULT)
+arch_40="generic-v2"     #  40. Generic-x86-64-v2
+arch_41="generic-v3"     #  41. Generic-x86-64-v3
+arch_42="generic-v4"     #  42. Generic-x86-64-v4
+arch_43="native_intel"   #  43. Intel-Native optimizations autodetected by the compiler
+arch_44="native_amd"     #  44. AMD-Native optimizations autodetected by the compiler
 EOF
 }
 
 
 function default_conf {
     cat << EOF > $1
-CONFIG_VERSION=0.6.5
+# Since kernel version 5.1, that contains BTF option, for building the kernel package
+# needed above 8 Gb of RAM + SWAP. And 21 Gb of storage (or less if you using modprobed-db)
+# You have been warned!
+
 # Preferred editor for editing settings.
 EDITOR="need_config"
 
+# Sets the interval with which the systemd monitors for a new kernel.
+OnCalendar="6h"
+
+# For selecting another version of kernel. Format 'git_commit:version', e.g. 'bb1d3c5:6.6-1'
+# Use 'git log --oneline' in BUILD_DIR to list them
+NEEDED_VERSION=""
+
 # The base directory on this system where the directories to sync are located. Don't add a slash at the end!
 BUILD_DIR="/home/$USER/.local/share/linux-ck-autobuild"
+
+# You can choose another compressor - GZIP, BZIP2, LZMA, XZ, LZO, LZ4 rather default - ZSTD
+USE_KERNEL_COMPRESS_METHOD=""
+
+# List of modules does not need to be compiled, space separated.
+NOMODULES=""
+
+# User commands to run after compiling kernels, example: 'echo "Autobuild done" | mail -s "Autobuild done" mail@domain.tld'
+USER_COMMAND1=""
+USER_COMMAND2=""
+USER_COMMAND3=""
+
+# Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends witch new module you need to compile.
+# Needed with Modprobed-db
+AUTONO="N,N,N,N,N"
+
+# Select a repo-ck mirror to use when seeking for prebuilt packages (only one can be enabled).
+REPO_CK_MIRROR="https://mirror.lesviallon.fr/repo-ck/os/x86_64"
+REPO_CK_NAME="repo-ck"
+# Another variant, repo from author
+#REPO_CK_MIRROR="http://repo-ck.com/x86_64"
+#REPO_CK_NAME="repo-ck"
 
 # If you have a local repository and wish to automatically add completed builds to it you can enable it by
 # setting USE_LOCAL_REPO to "y", leave empty to disable.
@@ -79,53 +111,31 @@ USE_LOCAL_REPO=""
 LOCAL_REPO="/home/$USER/.local/share/linux-ck-autobuild/local_repo"
 LOCAL_REPO_NAME="linux-ck"
 
-# List the sub architecture you want to build : ( 39 )
-# In case of multiple architectures separate them with a space like so: ( 39 43 44 )
-# Or use option -a for select from subarches list, see --help.
-SUBARCH=( 39 )
+####################################################################################
+##CK-specific options
 
 # If you have the modprobe-db package installed and wish to use it, change to 'y' otherwise leave empty.
 # With the modprobe-db package only the modules that were listed by modprobe-db get build, significantly
 # reducing build times.
 # See: https://wiki.archlinux.org/title/Modprobed-db
-USE_MODPROBE_DB=""
+localmodcfg=""
 
 # Compile using clang rather than gcc, change to 'y' otherwise leave empty.
-USE_CLANG=""
+clangbuild=""
 
-# Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends witch new module you need to compile.
-AUTONO="N,N,N,N,N"
+# List the sub architecture you want to build : ( 39 )
+# In case of multiple architectures separate them with a space like so: ( 39 40 41 )
+# Or use option -a for select from subarches list, see --help.
+subarch=( 39 )
+####################################################################################
 
-# List of modules does not need to be compiled, space separated.
-NOMODULES=""
-
-# Select a repo-ck mirror to use when seeking for prebuilt packages (only one can be enabled).
-REPO_CK_MIRROR="https://mirror.lesviallon.fr/repo-ck/os/x86_64"
-REPO_CK_NAME="repo-ck"
-#REPO_CK_MIRROR="http://repo-ck.com/x86_64"
-#REPO_CK_NAME="repo-ck"
-
-# Sets the interval with which the watchdog monitors for a new kernel
-WATCHDOG_INTERVAL="6h"
-
-# User commands to run after compiling kernels, example: 'echo "Autobuild done" | mail -s "Autobuild done" mail@domain.tld'
-USER_COMMAND1=""
-USER_COMMAND2=""
-USER_COMMAND3=""
-
-# DEPRECATED since kernel version 5.1, that contains BTF Format and required above 10Gb (!) of RAM+SWAP
-# LOW RAM SPECIFIC SETTINGS ONLY
-# When compile kernel on a machine with low RAM, like VPS, default compressor ZSTD doesn't compress kernel
-# with RAM less than 1Gb.
-
-# You can choose another compressor - GZIP, BZIP2, LZMA, XZ, LZO, LZ4 rather default - ZSTD
-USE_KERNEL_COMPRESS_METHOD=""
-
-# For selecting another version of kernel. Format 'git_commit:version', e.g. 'bb1d3c5:6.6'
-# Use 'git log --oneline' in BUILD_DIR for list them
-NEEDED_VERSION=""
+#Other
+CONFIG_VERSION=0.6.6
 EOF
 }
+
+
+VERSION=0.6.6
 
 
 function print_help {
@@ -165,7 +175,7 @@ function set_subarches {
         read -rp "Write numbers of desired arches above, space separated:" -e -i "${archs}" archs
     fi
     if [ -n "$archs" ]; then
-        sed -i '/^#/!s|SUBARCH=(.*)|SUBARCH=('"${archs[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
+        sed -i '/^#/!s|subarch=(.*)|subarch=('"${archs[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
         echo "Config updated!"
     fi
     exit 1
@@ -173,7 +183,7 @@ function set_subarches {
 
 
 function update_config {
-    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_MODPROBE_DB USE_CLANG AUTONO NOMODULES REPO_CK_MIRROR REPO_CK_NAME WATCHDOG_INTERVAL USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 USE_KERNEL_COMPRESS_METHOD NEEDED_VERSION)
+    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME localmodcfg clangbuild AUTONO NOMODULES REPO_CK_MIRROR REPO_CK_NAME OnCalendar USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 USE_KERNEL_COMPRESS_METHOD NEEDED_VERSION)
 
     mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
     default_conf /home/$USER/.config/$program_name/$program_name.conf
@@ -182,7 +192,7 @@ function update_config {
         sed -i '/^#/!s|'$element'=".*"|'$element'="'${!element}'"|g' /home/$USER/.config/$program_name/$program_name.conf
     done
 
-    sed -i '/^#/!s|SUBARCH=(.*)|SUBARCH=( '"${SUBARCH[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
+    sed -i '/^#/!s|subarch=(.*)|subarch=( '"${subarch[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
     echo "Config updated!"
 }
 
@@ -191,7 +201,7 @@ function load_config {
     if [ -r /home/$USER/.config/$program_name/$program_name.conf ]; then
         .   /home/$USER/.config/$program_name/$program_name.conf
         if [ "$CONFIG_VERSION" == "$VERSION" ]; then
-            if [[ -z $EDITOR || -z $BUILD_DIR || -z $SUBARCH ]]; then
+            if [[ -z $EDITOR || -z $BUILD_DIR || -z $subarch ]]; then
                 echo "ERROR: One or more settings are missing, please check your configuration." && exit 1
             fi
         else
@@ -236,7 +246,7 @@ function check_build_dir {
         gpg --recv-keys 79BE3E4300411886 # Linus Torvalds
         gpg --recv-keys 38DBBDC86092693E # Greg Kroah-Hartman
         echo "Install dependencies"
-        sudo pacman -Syu --needed bc cpio gettext libelf pahole python perl tar xz $([ -n "$USE_CLANG" ] && echo "clang llvm lld")
+        sudo pacman -Syu --needed bc cpio gettext libelf pahole python perl tar xz $([ -n "$clangbuild" ] && echo "clang llvm lld")
     fi
 }
 
@@ -285,7 +295,7 @@ function main_program {
     latest_version=$([ -n "$NEEDED_VERSION" ] && echo ${NEEDED_VERSION#*:} || curl -s https://aur.archlinux.org/packages/linux-ck | grep -Po '(?<=linux-ck ).*(?=</h2)')
     [ "$latest_version" == "" ] && { echo "Error: latest version not defined from AUR. Check settings or connection!"; exit 1; }
 
-    for element in "${SUBARCH[@]}"; do
+    for element in "${subarch[@]}"; do
 
         subarch_name="arch_$element"
         [ "${!subarch_name}" != "" ] && subarch_name="-"${!subarch_name} || subarch_name=${!subarch_name}
@@ -296,15 +306,16 @@ function main_program {
         if [ -z "$found" ]; then
 
             # PKGBUILD file
-            if [ -z "$USE_MODPROBE_DB" ]; then
+            if [ -z "$localmodcfg" ]; then
                 sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'' $BUILD_DIR/linux-ck/PKGBUILD
+                AUTONO=""
             else
                 sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'-modprobed' $BUILD_DIR/linux-ck/PKGBUILD
-                sed -i '/_localmodcfg=/c\_localmodcfg='$USE_MODPROBE_DB'' $BUILD_DIR/linux-ck/PKGBUILD
+                sed -i '/_localmodcfg=/c\_localmodcfg='$localmodcfg'' $BUILD_DIR/linux-ck/PKGBUILD
             fi
             sed -i '/_subarch=/c\_subarch='$element'' $BUILD_DIR/linux-ck/PKGBUILD
-            if [ -n "$USE_CLANG" ]; then
-                sed -i '/_clangbuild=/c\_clangbuild='$USE_CLANG'' $BUILD_DIR/linux-ck/PKGBUILD
+            if [ -n "$clangbuild" ]; then
+                sed -i '/_clangbuild=/c\_clangbuild='$clangbuild'' $BUILD_DIR/linux-ck/PKGBUILD
             fi
             for patch in $( ls -1 $BUILD_DIR/*.patch 2>/dev/null | sort -r ) ; do
                 sed -i '/  diff -u ..\/config .config || :/c\  diff -u ..\/config .config || :\n\n  patch -Np1 < "..\/..\/..\/'$(basename $patch)'"' $BUILD_DIR/linux-ck/PKGBUILD
@@ -331,8 +342,8 @@ function main_program {
             # Compile kernel
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name-$latest_version"
             echo "Compile parameters are:
-  Modprobed-db"$(pp ${USE_MODPROBE_DB} ": ${HOME}/.config/modprobed.db" ": No")"
-  CLANG"$(pp ${USE_CLANG} ": Yes" ": No")"
+  Modprobed-db"$(pp ${localmodcfg} ": ${HOME}/.config/modprobed.db" ": No")"
+  CLANG"$(pp ${clangbuild} ": Yes" ": No")"
   Compress method"$(pp ${USE_KERNEL_COMPRESS_METHOD} ": ${USE_KERNEL_COMPRESS_METHOD}" ": ZSTD (default)")"
   Modules to not compile"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ',' '\n' | makepkg -C )) > $logfile
