@@ -91,7 +91,7 @@ USER_COMMAND3=""
 
 # Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends witch new module you need to compile.
 # Needed with Modprobed-db
-AUTONO="N,N,N,N,N"
+AUTONO="N N N N N"
 
 # Select a repo-ck mirror to use when seeking for prebuilt packages (only one can be enabled).
 REPO_CK_MIRROR="https://mirror.lesviallon.fr/repo-ck/os/x86_64"
@@ -188,8 +188,8 @@ function update_config {
     mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
     default_conf /home/$USER/.config/$program_name/$program_name.conf
 
-    for element in "${UPDATE[@]}"; do
-        sed -i '/^#/!s|'$element'=".*"|'$element'="'${!element}'"|g' /home/$USER/.config/$program_name/$program_name.conf
+    for item in ${!UPDATE[*]}; do
+        sed -i '/^#/!s|'${UPDATE[$item]}'=".*"|'${UPDATE[$item]}'="'"${!UPDATE[$item]}"'"|g' /home/$USER/.config/$program_name/$program_name.conf
     done
 
     sed -i '/^#/!s|subarch=(.*)|subarch=( '"${subarch[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
@@ -346,7 +346,7 @@ function main_program {
   CLANG"$(pp ${clangbuild} ": Yes" ": No")"
   Compress method"$(pp ${USE_KERNEL_COMPRESS_METHOD} ": ${USE_KERNEL_COMPRESS_METHOD}" ": ZSTD (default)")"
   Modules to not compile"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
-            ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ',' '\n' | makepkg -C )) > $logfile
+            ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -C )) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name-$latest_version"
             else
                 echo "$(date +"%Y-%m-%d_%H:%M") Kernel linux-ck$subarch_name-$latest_version $found" > $logfile
