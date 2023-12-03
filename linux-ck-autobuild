@@ -351,16 +351,16 @@ function main_program {
             fi
 
             # Compile kernel
-            echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name-$latest_version"$([ -n "$localmodcfg" ] && echo "-modprobed")
+            echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-$latest_version"
             echo "Compile parameters are:
-  Modprobed-db"$(pp ${localmodcfg} ": ${HOME}/.config/modprobed.db" ": No")"
+  Modprobed-db"$(pp ${localmodcfg} ": ${DBFILE}" ": No")"
   CLANG"$(pp ${clangbuild} ": Yes" ": No")"
   Compress method"$(pp ${USE_KERNEL_COMPRESS_METHOD} ": ${USE_KERNEL_COMPRESS_METHOD}" ": ZSTD (default)")"
   Modules to not compile"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -C )) > $logfile
-            echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name-$latest_version"$([ -n "$localmodcfg" ] && echo "-modprobed")
+            echo "$(date +"%Y-%m-%d_%H:%M") End kernel build linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-$latest_version"
             else
-                echo "$(date +"%Y-%m-%d_%H:%M") Kernel linux-ck$subarch_name-$latest_version"$([ -n "$localmodcfg" ] && echo "-modprobed")" $found" > $logfile
+                echo "$(date +"%Y-%m-%d_%H:%M") Kernel linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-$latest_version $found" > $logfile
         fi
         update_repo
     done
