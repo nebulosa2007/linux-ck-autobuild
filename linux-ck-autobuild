@@ -131,16 +131,16 @@ subarch=( 39 )
 ####################################################################################
 
 #Other
-CONFIG_VERSION=0.7.1
+CONFIG_VERSION=0.7.0
 # Profiles
 # Set parameters in profiles files one by one. Fill the names of files space separated.
-PROFILES=(linux-ck-autobuild)
+PROFILES=( linux-ck-autobuild )
 
 EOF
 }
 
 
-VERSION=0.7.1
+VERSION=0.7.0
 
 
 function print_help {
