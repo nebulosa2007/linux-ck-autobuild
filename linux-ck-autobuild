@@ -262,11 +262,11 @@ function check_build_dir {
 function check_repo_ck {
     package_kernel="linux-ck$subarch_name-$latest_version-x86_64.pkg.tar.zst"
     package_header="linux-ck$subarch_name-headers-$latest_version-x86_64.pkg.tar.zst"
-    if [ -n "USE_LOCAL_REPO" ] && ([ -r $LOCAL_REPO/$package_kernel ] || [ -r $LOCAL_REPO/$package_kernel-modprobed ]) ; then
+    if [ -n "USE_LOCAL_REPO" ] && ([ -r $LOCAL_REPO/$package_kernel ] || [ -r $LOCAL_REPO/linux-ck$subarch_name-modprobed-$latest_version-x86_64.pkg.tar.zst ]) ; then
        echo "found in local repo"
        return
     fi
-    if [ -r $BUILD_DIR/$package_kernel ] || [ -r $BUILD_DIR/$package_kernel-modprobed ]; then
+    if [ -r $BUILD_DIR/$package_kernel ] || [ -r $BUILD_DIR/linux-ck$subarch_name-modprobed-$latest_version-x86_64.pkg.tar.zst ]; then
        echo "found in build dir"
        return
     fi
