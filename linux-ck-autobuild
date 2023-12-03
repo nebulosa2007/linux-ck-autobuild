@@ -92,6 +92,8 @@ USER_COMMAND3=""
 # Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends witch new module you need to compile.
 # Needed with Modprobed-db
 AUTONO="N N N N N"
+# db-file for modprobed
+DBFILE="linux-ck-autobuild.db"
 
 # Select a repo-ck mirror to use when seeking for prebuilt packages (only one can be enabled).
 REPO_CK_MIRROR="https://mirror.lesviallon.fr/repo-ck/os/x86_64"
@@ -308,7 +310,7 @@ function main_program {
         subarch_name="arch_$element"
         [ "${!subarch_name}" != "" ] && subarch_name="-"${!subarch_name} || subarch_name=${!subarch_name}
 
-        logfile=$BUILD_DIR/linux-ck$subarch_name-$latest_version.log
+        logfile=$BUILD_DIR/linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-$latest_version.log
 
         found=$(check_repo_ck)
         if [ -z "$found" ]; then
@@ -320,6 +322,7 @@ function main_program {
             else
                 sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'-modprobed' $BUILD_DIR/linux-ck/PKGBUILD
                 sed -i '/_localmodcfg=/c\_localmodcfg='$localmodcfg'' $BUILD_DIR/linux-ck/PKGBUILD
+                sed -i 's|/modprobed.db|/'$program_name'/'$DBFILE'|g' $BUILD_DIR/linux-ck/PKGBUILD
             fi
             sed -i '/_subarch=/c\_subarch='$element'' $BUILD_DIR/linux-ck/PKGBUILD
             if [ -n "$clangbuild" ]; then
