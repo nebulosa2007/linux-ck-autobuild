@@ -11,15 +11,15 @@ program_name="linux-ck-autobuild"
 
 function subarches {
     cat << EOF > $1
-arch_1="k8"              #  1. AMD Opteron/Athlon64/Hammer/K8
-arch_2="k8sse3"          #  2. AMD Opteron/Athlon64/Hammer/K8 with SSE3
-arch_3="k10"             #  3. AMD 61xx/7x50/PhenomX3/X4/II/K10
-arch_4="barcelona"       #  4. AMD Barcelona
-arch_5="bobcat"          #  5. AMD Bobcat
-arch_6="jaguar"          #  6. AMD Jaguar
-arch_7="bulldozer"       #  7. AMD Bulldozer
-arch_8="piledriver"      #  8. AMD Piledriver
-arch_9="steamroller"     #  9. AMD Steamroller
+arch_1="k8"              #   1. AMD Opteron/Athlon64/Hammer/K8
+arch_2="k8sse3"          #   2. AMD Opteron/Athlon64/Hammer/K8 with SSE3
+arch_3="k10"             #   3. AMD 61xx/7x50/PhenomX3/X4/II/K10
+arch_4="barcelona"       #   4. AMD Barcelona
+arch_5="bobcat"          #   5. AMD Bobcat
+arch_6="jaguar"          #   6. AMD Jaguar
+arch_7="bulldozer"       #   7. AMD Bulldozer
+arch_8="piledriver"      #   8. AMD Piledriver
+arch_9="steamroller"     #   9. AMD Steamroller
 arch_10="excavator"      #  10. AMD Excavator
 arch_11="zen"            #  11. AMD Zen
 arch_12="zen2"           #  12. AMD Zen 2
