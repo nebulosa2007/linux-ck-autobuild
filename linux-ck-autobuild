@@ -111,6 +111,7 @@ USE_LOCAL_REPO=""
 LOCAL_REPO="/home/$USER/.local/share/linux-ck-autobuild/local_repo"
 LOCAL_REPO_NAME="linux-ck"
 
+
 ####################################################################################
 ##CK-specific options
 
@@ -130,12 +131,16 @@ subarch=( 39 )
 ####################################################################################
 
 #Other
-CONFIG_VERSION=0.6.6
+CONFIG_VERSION=0.7.0
+# Profiles
+# Set parameters in profiles files one by one. Default - no profiles. Fill the names of files space separated.
+PROFILES=($program_name)
+
 EOF
 }
 
 
-VERSION=0.6.6
+VERSION=0.7.0
 
 
 function print_help {
@@ -183,7 +188,7 @@ function set_subarches {
 
 
 function update_config {
-    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME localmodcfg clangbuild AUTONO NOMODULES REPO_CK_MIRROR REPO_CK_NAME OnCalendar USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 USE_KERNEL_COMPRESS_METHOD NEEDED_VERSION)
+    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME localmodcfg clangbuild AUTONO NOMODULES REPO_CK_MIRROR REPO_CK_NAME OnCalendar USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 USE_KERNEL_COMPRESS_METHOD NEEDED_VERSION PROFILES)
 
     mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
     default_conf /home/$USER/.config/$program_name/$program_name.conf
@@ -193,6 +198,7 @@ function update_config {
     done
 
     sed -i '/^#/!s|subarch=(.*)|subarch=( '"${subarch[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
+    sed -i '/^#/!s|PROFILES=(.*)|PROFILES=( '"${PROFILES[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
     echo "Config updated!"
 }
 
@@ -372,7 +378,10 @@ if [ -n "$1" ]; then
 fi
 
 
-main_program
-$USER_COMMAND1
+for profile in ${PROFILES[@]}; do
+	[ -r /home/$USER/.config/$program_name/$profile.conf ] && . /home/$USER/.config/$program_name/$profile.conf
+	main_program
+	$USER_COMMAND1
+done
 $USER_COMMAND2
 $USER_COMMAND3
