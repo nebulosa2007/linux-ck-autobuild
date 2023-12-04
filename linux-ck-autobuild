@@ -167,15 +167,18 @@ Options:
 
 function edit_config {
     if [ -f /usr/bin/$EDITOR ]; then
-        p=$(basename $1 | sed 's/.conf//g')
-        if [[ -n $p && -r /home/$USER/.config/$program_name/$p.conf ]]; then
-           $EDITOR /home/$USER/.config/$program_name/$p.conf
-           exit 1
+        if [ -n "$1" ]; then
+           p=$(basename "$1" | sed 's/.conf//g')
+           if [[ -n "$p" && -r /home/$USER/.config/$program_name/$p.conf ]]; then
+               $EDITOR /home/$USER/.config/$program_name/$p.conf
+               exit 1
+           else
+               echo "No profile $p.conf found"
+               exit 1
+           fi
         else
-           echo "No profile $p.conf found"
-           exit 1
+            $EDITOR /home/$USER/.config/$program_name/$program_name.conf
         fi
-        $EDITOR /home/$USER/.config/$program_name/$program_name.conf
     else
         echo -e "No editor found, please set your editor in:\n/home/$USER/.config/$program_name/$program_name.conf"
     fi
