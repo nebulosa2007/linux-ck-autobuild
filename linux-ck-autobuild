@@ -230,8 +230,8 @@ function load_config {
 function update_repo {
     if [ -n "$USE_LOCAL_REPO" ]; then
         mkdir -p $LOCAL_REPO
-        mv $BUILD_DIR/linux-ck/*$latest_version-x86_64.pkg.tar.zst $LOCAL_REPO 2> /dev/null
-        repo-add -q -n --nocolor $LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz $LOCAL_REPO/*$latest_version-x86_64.pkg.tar.zst
+        mv $BUILD_DIR/linux-ck/*$latest_version-x86_64.pkg.tar.zst $LOCAL_REPO 2>/dev/null
+        [ $? -eq 0 ] && repo-add -q -n --nocolor $LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz $LOCAL_REPO/*$latest_version-x86_64.pkg.tar.zst
     fi
 }
 
@@ -262,39 +262,39 @@ function check_build_dir {
 
 
 function check_repo_ck {
-    package_kernel="linux-ck$subarch_name-$latest_version-x86_64.pkg.tar.zst"
-    package_header="linux-ck$subarch_name-headers-$latest_version-x86_64.pkg.tar.zst"
-    if [ -n "USE_LOCAL_REPO" ] && ( [[ -r $LOCAL_REPO/$package_kernel || -r $LOCAL_REPO/linux-ck$subarch_name-modprobed-$latest_version-x86_64.pkg.tar.zst ]] ) ; then
+    package_kernel=linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-$latest_version-x86_64.pkg.tar.zst
+    package_header=linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-headers-$latest_version-x86_64.pkg.tar.zst
+    if [ -r "$LOCAL_REPO/$package_kernel" ] ; then
        echo "found in local repo"
        return
-    fi
-    if [[ -r $BUILD_DIR/$package_kernel || -r $BUILD_DIR/linux-ck$subarch_name-modprobed-$latest_version-x86_64.pkg.tar.zst ]]; then
+    elif [ -r "$BUILD_DIR/linux-ck/$package_kernel" ]; then
        echo "found in build dir"
        return
-    fi
-    curl_cmd="curl --head --fail --silent"
-    kernel=$($curl_cmd  $REPO_CK_MIRROR/$package_kernel | grep 'HTTP/2 200')
-    headers=$($curl_cmd $REPO_CK_MIRROR/$package_header | grep 'HTTP/2 200')
+    elif [ -z "$localmodcfg" ]; then
+        curl_cmd="curl --head --fail --silent"
+        kernel=$($curl_cmd  $REPO_CK_MIRROR/$package_kernel | grep 'HTTP/2 200')
+        headers=$($curl_cmd $REPO_CK_MIRROR/$package_header | grep 'HTTP/2 200')
 
-    if [[ -n $kernel && $headers ]]; then
-        #Get sha256sums
-        curl -sL $REPO_CK_MIRROR/$REPO_CK_NAME.db.tar.gz | tar xJ --one-top-level=/tmp/linux-ck-hashes
-        sha256sums=$(grep -REA1 "%(FILENAME|SHA256SUM)%" /tmp/linux-ck-hashes | sed 's/ --//g;s/%SHA256SUM%//g;s/%FILENAME%//g;s/\n//g')
-        rm -fr /tmp/linux-ck-hashes
+        if [[ -n $kernel && $headers ]]; then
+            #Get sha256sums
+            curl -sL $REPO_CK_MIRROR/$REPO_CK_NAME.db.tar.gz | tar xJ --one-top-level=/tmp/linux-ck-hashes
+            sha256sums=$(grep -REA1 "%(FILENAME|SHA256SUM)%" /tmp/linux-ck-hashes | sed 's/ --//g;s/%SHA256SUM%//g;s/%FILENAME%//g;s/\n//g')
+            rm -fr /tmp/linux-ck-hashes
 
-        echo "mirroring from $REPO_CK_MIRROR"
-        cd $BUILD_DIR/linux-ck
-        for package in $package_kernel $package_header; do
-            curl -C - $REPO_CK_MIRROR/$package -o $package.remote
-            sha256sum_check=$(echo $sha256sums | grep -Po '(?<='$package' -- )([^ ]*) \K(\S+)'| grep -Po '(?<=desc-)(\S+)')
-            [ `echo "$sha256sum_check $package.remote" | sha256sum --check - --status` ] || mv $package{.remote,}
-        done
+            echo "mirroring from $REPO_CK_MIRROR"
+            cd $BUILD_DIR/linux-ck
+            for package in $package_kernel $package_header; do
+                curl -C - $REPO_CK_MIRROR/$package -o $package.remote
+                sha256sum_check=$(echo $sha256sums | grep -Po '(?<='$package' -- )([^ ]*) \K(\S+)'| grep -Po '(?<=desc-)(\S+)')
+                [ `echo "$sha256sum_check $package.remote" | sha256sum --check - --status` ] || mv $package{.remote,}
+            done
+        fi
     fi
 }
 
 
 function pp {
-	[ -n "$1" ] && echo "$2" || echo "$3"
+    [ -n "$1" ] && echo "$2" || echo "$3"
 }
 
 
@@ -382,9 +382,10 @@ fi
 
 
 for profile in ${PROFILES[@]}; do
-	[ -r /home/$USER/.config/$program_name/$profile.conf ] && . /home/$USER/.config/$program_name/$profile.conf
-	main_program
-	$USER_COMMAND1
+    [ -r /home/$USER/.config/$program_name/$profile.conf ] && . /home/$USER/.config/$program_name/$profile.conf
+    echo "Using profile $profile:"
+    main_program
+    $USER_COMMAND1
 done
 $USER_COMMAND2
 $USER_COMMAND3
