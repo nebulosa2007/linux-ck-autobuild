@@ -155,9 +155,11 @@ $program_name, version $VERSION for headless machines.
 A tool to automatically build -ck kernels.
 
 Options:
--h,    --help    Display this help
--c,              Create and/or set options
--a,              Choose desired subarches
+-h, --help            Display this help
+-c [profile_name]     Create and/or set options, default or selected profilename file
+-n <profile_name>     Create new profile
+-l, --list            List available profiles
+-a                    Choose desired subarches
 "
     exit 1
 }
@@ -165,10 +167,29 @@ Options:
 
 function edit_config {
     if [ -f /usr/bin/$EDITOR ]; then
+        p=$(basename $1 | sed 's/.conf//g')
+        if [[ -n $p && -r /home/$USER/.config/$program_name/$p.conf ]]; then
+           $EDITOR /home/$USER/.config/$program_name/$p.conf
+           exit 1
+        else
+           echo "No profile $p.conf found"
+           exit 1
+        fi
         $EDITOR /home/$USER/.config/$program_name/$program_name.conf
-        .       /home/$USER/.config/$program_name/$program_name.conf
     else
         echo -e "No editor found, please set your editor in:\n/home/$USER/.config/$program_name/$program_name.conf"
+    fi
+    exit 1
+}
+
+
+function new_profile {
+    skip_parameters="(EDITOR|BUILD_DIR|USE_LOCAL_REPO|LOCAL_REPO|LOCAL_REPO_NAME|REPO_CK_MIRROR|REPO_CK_NAME|OnCalendar|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|CONFIG_VERSION|PROFILES)"
+    if [ -n "$1" ]; then
+        grep -Ev "^(#|$)" /home/$USER/.config/$program_name/$program_name.conf | grep -Ev $skip_parameters | sed 's/^/# /g' > /home/$USER/.config/$program_name/$1.conf
+        $EDITOR /home/$USER/.config/$program_name/$1.conf
+    else
+        echo "Name of new profile required!"
     fi
     exit 1
 }
@@ -381,7 +402,9 @@ load_config
 if [ -n "$1" ]; then
     case "$1" in
     -h | --help ) print_help ;;
-    -c          ) edit_config ;;
+    -c          ) edit_config $2 ;;
+    -l | --list ) ls $HOME/.config/$program_name/*.conf | grep -v $program_name.conf && exit 1 ;;
+    -n          ) new_profile $2 ;;
     -a          ) set_subarches;;
      *          ) echo "Option not found, try -h or --help" && exit 1 ;;
     esac
