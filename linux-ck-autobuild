@@ -84,9 +84,12 @@ USE_KERNEL_COMPRESS_METHOD=""
 # List of modules does not need to be compiled, space separated.
 NOMODULES=""
 
-# User commands to run after compiling kernels, example: 'echo "Autobuild done" | mail -s "Autobuild done" mail@domain.tld'
+# User commands to run after compiling kernels, example: 'echo "Autobuild done" | mail -s "Autobuild \$kernel_version done" mail@domain.tld'
+# After build kernel only
 USER_COMMAND1=""
+# After current profile 
 USER_COMMAND2=""
+# End of all
 USER_COMMAND3=""
 
 # Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends witch new module you need to compile.
@@ -362,6 +365,7 @@ function main_program {
   Modules to not compile"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -C )) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $kernel_version"
+            eval $USER_COMMAND1
         else
             echo "$(date +"%Y-%m-%d_%H:%M") Kernel $kernel_version $found" > $logfile
         fi
@@ -388,7 +392,6 @@ for profile in ${PROFILES[@]}; do
     [ -r "/home/$USER/.config/$program_name/$profile.conf" ] && . "/home/$USER/.config/$program_name/$profile.conf"
     echo -e "\n\nUsing profile: ${profile}.conf"
     main_program
-    $USER_COMMAND1
+    eval $USER_COMMAND2
 done
-$USER_COMMAND2
-$USER_COMMAND3
+eval $USER_COMMAND3
