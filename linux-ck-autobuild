@@ -388,6 +388,8 @@ function main_program {
   Compress method"$(pp ${USE_KERNEL_COMPRESS_METHOD} ": ${USE_KERNEL_COMPRESS_METHOD}" ": ZSTD (default)")"
   Modules to not compile"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -C )) > $logfile
+            buildstatus=$(echo -n $?": "; tail -1 $logfile)
+            echo "Build status: $buildstatus"
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $kernel_version"
             eval $USER_COMMAND1
         else
