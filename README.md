@@ -8,11 +8,13 @@ https://wiki.archlinux.org/title/Unofficial_user_repositories/Repo-ck
 ## Features
 
 * Automatically builds desired architectures
+* Frofiles support
 * Daemon which monitors for new releases and automatically starts the build script
 * Compatible with modprobe-db
 * Custom commands that can be run after the build script
 * Automatically checks the ck repo for pre-built kernels
 * Option to add build kernels to your local repo
+* Setting neeeded commit of linux-ck PKGBUILD (e.g. for compile old versions)
 
 ## Installing
 
@@ -24,8 +26,11 @@ First you'll need to setup the configuration file, simply by running ``linux-ck-
 
 The minimum options you'll have to modify will be the SUBARCH (the micro architectures you want to build) and probably the BUILD_DIR, which sets the location where the builds take place (don't worry, you don't have to download anything yourself). SUBARCH also can be modify by ``linux-ck-autobuild -a``
 
+Profiles:
+Use ``linux-ck-autobuild -n mypc1`` to add a new profile, then uncomment/edit desired parameters which should be differ from default profile. After editing you should write name of profile on desired order of compiling - ``linux-ck-autobuild -c``, then edit: ``PROFILES=( mypc1 linux-ck-autobuild )`` 
+
 If you want to fully automate the build script you can enable the daemon by running:
 
 ``sudo systemctl enable linux-ck-autobuild@$USER.timer``
 
-The configuration can be accessed at any time by running ``linux-ck-autobuild -c`` from a command line.
+The configuration can be accessed at any time by running ``linux-ck-autobuild -c [profile_name]`` from a command line.
