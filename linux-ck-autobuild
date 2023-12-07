@@ -392,6 +392,7 @@ function main_program {
             echo "Build status: $buildstatus"
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $kernel_version"
             eval $USER_COMMAND1
+            echo
         else
             echo "$(date +"%Y-%m-%d_%H:%M") Kernel $kernel_version $found" > $logfile
         fi
@@ -402,8 +403,6 @@ function main_program {
 
 
 load_config
-
-
 if [ -n "$1" ]; then
     case "$1" in
     -h | --help ) print_help ;;
@@ -417,9 +416,17 @@ fi
 
 
 for profile in ${PROFILES[@]}; do
-    [ -r "/home/$USER/.config/$program_name/$profile.conf" ] && . "/home/$USER/.config/$program_name/$profile.conf"
-    echo -e "\n\nUsing profile: ${profile}.conf"
+    load_config
+    if [ -r "/home/$USER/.config/$program_name/$profile.conf" ]; then
+        . "/home/$USER/.config/$program_name/$profile.conf"
+    else
+        echo "Profile $profile not found. Skipping"
+        profile="linux-ck-autobuild"
+    fi
+    echo -e "\n\nLoad profile: ${profile}.conf"
     main_program
     eval $USER_COMMAND2
+    echo
 done
 eval $USER_COMMAND3
+echo
