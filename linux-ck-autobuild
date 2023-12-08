@@ -257,7 +257,7 @@ function update_repo {
         moved="n"
         if [ "$1" == "cleanup" ];then
             obsolete=$(ls -1 $LOCAL_REPO/*.zst | grep -v -f "$BUILD_DIR/.last_build")
-            mv $obsolete -t $LOCAL_REPO/archive 2>/dev/null && moved="y"
+            mv $obsolete -t $LOCAL_REPO/archive 2>/dev/null && rm -f $LOCAL_REPO/$LOCAL_REPO_NAME.{db,files}* && moved="y"
             renew=$(ls -1 $LOCAL_REPO/archive/*.zst | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'$LOCAL_REPO'/archive/&-x86_64.pkg.tar.zst|g')
             mv $renew -t $LOCAL_REPO 2>/dev/null && moved="y"
         else
