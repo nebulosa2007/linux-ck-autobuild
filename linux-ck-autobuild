@@ -257,8 +257,13 @@ function load_config {
 function update_repo {
     if [ -n "$USE_LOCAL_REPO" ]; then
         mkdir -p $LOCAL_REPO
+        mkdir -p $LOCAL_REPO/archive
         mv $BUILD_DIR/linux-ck/*$latest_version-x86_64.pkg.tar.zst $LOCAL_REPO 2>/dev/null
-        [ $? -eq 0 ] && repo-add -q -n --nocolor $LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz $LOCAL_REPO/*$latest_version-x86_64.pkg.tar.zst
+        if [ $? -eq 0 ]; then
+            last_versions=$(ls -1 $LOCAL_REPO/*.zst | sort -Vr | sort -ut. -k1,1)
+            old_versions=$(ls -1 $LOCAL_REPO/*.zst | grep -v "$last_versions")
+            repo-add -q -n --nocolor $LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz $last_versions && mv $old_versions -t $LOCAL_REPO/archive
+        fi
     fi
 }
 
@@ -423,7 +428,7 @@ for profile in ${PROFILES[@]}; do
         echo "Profile $profile not found. Skipping"
         profile="linux-ck-autobuild"
     fi
-    echo -e "\n\nLoad profile: ${profile}.conf"
+    echo -e "\n\nLoad profile: $profile.conf"
     main_program
     eval $USER_COMMAND2
     echo
