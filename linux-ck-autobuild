@@ -254,11 +254,19 @@ function update_repo {
     if [ -n "$USE_LOCAL_REPO" ]; then
         mkdir -p $LOCAL_REPO
         mkdir -p $LOCAL_REPO/archive
-        mv $BUILD_DIR/linux-ck/*$latest_version-x86_64.pkg.tar.zst $LOCAL_REPO 2>/dev/null
-        if [ $? -eq 0 ]; then
+        moved="n"
+        if [ "$1" == "cleanup" ];then
+            obsolete=$(ls -1 $LOCAL_REPO/*.zst | grep -v -f "$BUILD_DIR/.last_build")
+            mv $obsolete -t $LOCAL_REPO/archive 2>/dev/null && moved="y"
+            renew=$(ls -1 $LOCAL_REPO/archive/*.zst | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'$LOCAL_REPO'/archive/&-x86_64.pkg.tar.zst|g')
+            mv $renew -t $LOCAL_REPO 2>/dev/null && moved="y"
+        else
+            mv $BUILD_DIR/linux-ck/*.zst $LOCAL_REPO 2>/dev/null && moved="y"
+        fi
+        if [ "$moved" == "y" ]; then
             last_versions=$(ls -1 $LOCAL_REPO/*.zst | sort -Vr | sort -ut. -k1,1)
             old_versions=$(ls -1 $LOCAL_REPO/*.zst | grep -v "$last_versions")
-            repo-add -q -n --nocolor $LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz $last_versions && mv $old_versions -t $LOCAL_REPO/archive
+            repo-add -q -n --nocolor $LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz $last_versions && mv $old_versions -t $LOCAL_REPO/archive 2>/dev/null
         fi
     fi
 }
@@ -291,8 +299,11 @@ function check_build_dir {
 
 function check_repo_ck {
     package_kernel=linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-$latest_version-x86_64.pkg.tar.zst
-    package_header=linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-headers-$latest_version-x86_64.pkg.tar.zst
-    if [ -r "$LOCAL_REPO/$package_kernel" ] ; then
+    package_headers=linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-headers-$latest_version-x86_64.pkg.tar.zst
+    if [ -r "$LOCAL_REPO/archive/$package_kernel" ] ; then
+       echo "found in archive local repo"
+       return
+    elif [ -r "$LOCAL_REPO/$package_kernel" ] ; then
        echo "found in local repo"
        return
     elif [ -r "$BUILD_DIR/linux-ck/$package_kernel" ]; then
@@ -300,8 +311,8 @@ function check_repo_ck {
        return
     elif [ -z "$localmodcfg" ]; then
         curl_cmd="curl --head --fail --silent"
-        kernel=$($curl_cmd  $REPO_CK_MIRROR/$package_kernel | grep 'HTTP/2 200')
-        headers=$($curl_cmd $REPO_CK_MIRROR/$package_header | grep 'HTTP/2 200')
+        kernel=$($curl_cmd  $REPO_CK_MIRROR/$package_kernel  | grep 'HTTP/2 200')
+        headers=$($curl_cmd $REPO_CK_MIRROR/$package_headers | grep 'HTTP/2 200')
 
         if [[ -n $kernel && $headers ]]; then
             #Get sha256sums
@@ -311,7 +322,7 @@ function check_repo_ck {
 
             echo "mirroring from $REPO_CK_MIRROR"
             cd $BUILD_DIR/linux-ck
-            for package in $package_kernel $package_header; do
+            for package in $package_kernel $package_headers; do
                 curl -C - $REPO_CK_MIRROR/$package -o $package.remote
                 sha256sum_check=$(echo $sha256sums | grep -Po '(?<='$package' -- )([^ ]*) \K(\S+)'| grep -Po '(?<=desc-)(\S+)')
                 [ `echo "$sha256sum_check $package.remote" | sha256sum --check - --status` ] || mv $package{.remote,}
@@ -339,6 +350,7 @@ function main_program {
         [ "${!subarch_name}" != "" ] && subarch_name="-"${!subarch_name} || subarch_name=${!subarch_name}
 
         kernel_version=linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-$latest_version
+        headers_version=linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-headers-$latest_version
         pkgbuild=$BUILD_DIR/linux-ck/PKGBUILD
         config=$BUILD_DIR/linux-ck/config
         logfile=$BUILD_DIR/$kernel_version.log
@@ -392,8 +404,9 @@ function main_program {
             echo "$(date +"%Y-%m-%d_%H:%M") Kernel $kernel_version $found" > $logfile
         fi
         update_repo
+        echo "$kernel_version" >> $BUILD_DIR/.last_build
+        echo "$headers_version" >> $BUILD_DIR/.last_build
     done
-    echo "$latest_version" > $BUILD_DIR/.last_build
 }
 
 
@@ -409,7 +422,7 @@ if [ -n "$1" ]; then
     esac
 fi
 
-
+: > $BUILD_DIR/.last_build
 for profile in ${PROFILES[@]}; do
     load_config
     if [ -r "/home/$USER/.config/$program_name/$profile.conf" ]; then
@@ -423,5 +436,6 @@ for profile in ${PROFILES[@]}; do
     eval $USER_COMMAND2
     echo
 done
+update_repo "cleanup"
 eval $USER_COMMAND3
 echo
