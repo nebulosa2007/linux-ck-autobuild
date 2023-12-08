@@ -78,9 +78,6 @@ NEEDED_VERSION=""
 # The base directory on this system where the directories to sync are located. Don't add a slash at the end!
 BUILD_DIR="/home/$USER/.local/share/linux-ck-autobuild"
 
-# You can choose another compressor - GZIP, BZIP2, LZMA, XZ, LZO, LZ4 rather default - ZSTD
-USE_KERNEL_COMPRESS_METHOD=""
-
 # List of modules does not need to be compiled, space separated.
 NOMODULES=""
 
@@ -136,16 +133,15 @@ subarch=( 39 )
 ####################################################################################
 
 #Other
-CONFIG_VERSION=0.7.0
+CONFIG_VERSION=0.7.1
 # Profiles
 # Set parameters in profiles files one by one. Fill the names of files space separated.
 PROFILES=( linux-ck-autobuild )
-
 EOF
 }
 
 
-VERSION=0.7.0
+VERSION=0.7.1
 
 
 function print_help {
@@ -217,7 +213,7 @@ function set_subarches {
 
 
 function update_config {
-    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME localmodcfg clangbuild AUTONO NOMODULES REPO_CK_MIRROR REPO_CK_NAME OnCalendar USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 USE_KERNEL_COMPRESS_METHOD NEEDED_VERSION PROFILES)
+    UPDATE=( EDITOR BUILD_DIR USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME localmodcfg clangbuild AUTONO NOMODULES REPO_CK_MIRROR REPO_CK_NAME OnCalendar USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 NEEDED_VERSION PROFILES)
 
     mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
     default_conf /home/$USER/.config/$program_name/$program_name.conf
@@ -368,11 +364,6 @@ function main_program {
             done
 
             # config file
-            if [ -n "$USE_KERNEL_COMPRESS_METHOD" ]; then
-                sed -i 's/# CONFIG_KERNEL_'$USE_KERNEL_COMPRESS_METHOD' is not set/CONFIG_KERNEL_'$USE_KERNEL_COMPRESS_METHOD'=y/' $config
-                sed -i 's/CONFIG_KERNEL_ZSTD=y/# CONFIG_KERNEL_ZSTD is not set/' $config
-                editconfig="y"
-            fi
             if [ -n "$NOMODULES" ]; then
                 for module in $NOMODULES ; do
                     sed -i 's/'$module'=m/#'$module' is not set/' $config
@@ -390,7 +381,6 @@ function main_program {
             echo "Compile parameters are:
   Modprobed-db"$(pp ${localmodcfg} ": ${DBFILE}" ": No")"
   CLANG"$(pp ${clangbuild} ": Yes" ": No")"
-  Compress method"$(pp ${USE_KERNEL_COMPRESS_METHOD} ": ${USE_KERNEL_COMPRESS_METHOD}" ": ZSTD (default)")"
   Modules to not compile"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -mC )) > $logfile
             buildstatus=$(echo -n $?": "; tail -1 $logfile)
