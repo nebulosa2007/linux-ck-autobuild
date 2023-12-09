@@ -233,7 +233,7 @@ function load_config {
         .   /home/$USER/.config/$program_name/$program_name.conf
         if [ "$CONFIG_VERSION" == "$VERSION" ]; then
             if [[ -z $EDITOR || -z $BUILD_DIR || -z $subarch ]]; then
-                echo "ERROR: One or more settings are missing, please check your configuration." && exit 1
+                echo "ERROR: One or more settings are missing, please check your configuration."
                 sleep 3
                 edit_config
             fi
