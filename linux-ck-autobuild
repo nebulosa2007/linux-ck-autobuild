@@ -256,16 +256,16 @@ function update_repo {
         mkdir -p $LOCAL_REPO/archive
         moved="n"
         if [ "$1" == "cleanup" ];then
-            obsolete=$(ls -1 $LOCAL_REPO/*.zst | grep -v -f "$BUILD_DIR/.last_build")
+            obsolete=$(ls -1 $LOCAL_REPO/*.pkg.tar.zst | grep -v -f "$BUILD_DIR/.last_build")
             mv $obsolete -t $LOCAL_REPO/archive 2>/dev/null && rm -f $LOCAL_REPO/$LOCAL_REPO_NAME.{db,files}* && moved="y"
-            renew=$(ls -1 $LOCAL_REPO/archive/*.zst | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'$LOCAL_REPO'/archive/&-x86_64.pkg.tar.zst|g')
+            renew=$(ls -1 $LOCAL_REPO/archive/*.pkg.tar.zst | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'$LOCAL_REPO'/archive/&-x86_64.pkg.tar.zst|g')
             mv $renew -t $LOCAL_REPO 2>/dev/null && moved="y"
         else
-            mv $BUILD_DIR/linux-ck/*.zst $LOCAL_REPO 2>/dev/null && moved="y"
+            mv $BUILD_DIR/linux-ck/*.pkg.tar.zst $LOCAL_REPO 2>/dev/null && moved="y"
         fi
         if [ "$moved" == "y" ]; then
-            last_versions=$(ls -1 $LOCAL_REPO/*.zst | sort -Vr | sort -ut. -k1,1)
-            old_versions=$(ls -1 $LOCAL_REPO/*.zst | grep -v "$last_versions")
+            last_versions=$(ls -1 $LOCAL_REPO/*.pkg.tar.zst | sort -Vr | sort -ut. -k1,1)
+            old_versions=$(ls -1 $LOCAL_REPO/*.pkg.tar.zst | grep -v "$last_versions")
             repo-add -q -n --nocolor $LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz $last_versions && mv $old_versions -t $LOCAL_REPO/archive 2>/dev/null
         fi
     fi
