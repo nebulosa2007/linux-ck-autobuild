@@ -19,7 +19,7 @@ https://wiki.archlinux.org/title/Unofficial_user_repositories/Repo-ck
 ## Installing
 
 This package can be installed from the AUR:
-https://aur.archlinux.org/packages/linux-ck-autobuild (out-of-date)
+[linux-ck-autobuild-service](https://aur.archlinux.org/packages/linux-ck-autobuild-service)
 
 ## Usage
 First you'll need to setup the configuration file, simply by running ``linux-ck-autobuild`` from a command line. The script will notify you about configuration missing and will copy the default config to your home folder. Directions are given in the configuration file.
@@ -33,7 +33,13 @@ The configuration can be accessed at any time by running ``linux-ck-autobuild -c
 
 If you want to fully automate the build script, enable the daemon by running:
 ```
-linux-ck-autobuild -c # Configure first required!
+linux-ck-autobuild -c # Configure first required! Set EDITOR and other parameters as desired
 linux-ck-autobuild    # Check work of script and only then:  
 sudo systemctl enable --now linux-ck-autobuild@$USER.timer
 ```
+## Minimum requirements for building archlinux kernel (-ck)
+* CPU (x86_64). More cores - less compile time.
+* RAM+SWAP: peak to 8Gb* for btf.o compile (since [5.7.1.arch1-1](https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/commit/2db27e8ef8a6ca7c801082dcad3ad3ddf42c424d))
+* Disk space: 25Gb*
+
+  *Or less, if you use [modprobed-db](https://wiki.archlinux.org/title/Modprobed-db), depends how many modules you need to compile. 
