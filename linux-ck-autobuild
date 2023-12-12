@@ -68,9 +68,6 @@ function default_conf {
 # Preferred editor for editing settings.
 EDITOR="need_config"
 
-# Sets the interval with which the systemd monitors for a new kernel.
-OnCalendar="6h"
-
 # For selecting another version of kernel. Format 'git_commit:version', e.g. 'bb1d3c5:6.6-2'
 # Use 'git log --oneline' in BUILD_DIR to list them
 NEEDED_VERSION=""
@@ -133,7 +130,7 @@ subarch=( 39 )
 ####################################################################################
 
 #Other
-CONFIG_VERSION=0.7.1
+CONFIG_VERSION=0.7.2
 # Profiles
 # Set parameters in profiles files one by one. Fill the names of files space separated.
 PROFILES=( linux-ck-autobuild )
@@ -141,7 +138,7 @@ EOF
 }
 
 
-VERSION=0.7.1
+VERSION=0.7.2
 
 
 function print_help {
