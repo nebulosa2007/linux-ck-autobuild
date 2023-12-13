@@ -1,6 +1,6 @@
 # linux-ck-autobuild service
 
-## About 
+## About
 > Linux-ck is a package that allows users to run a kernel and headers setup patched with Con Kolivas' -ck patchset, including hrtimer patches and the 1000 Hz tick rate and others cpu optimizations correspond to -march= settings: generic-v2,3,4 or specific subarch. Also you can choose Clang compiler rather that GCC.
 
 https://wiki.archlinux.org/title/Unofficial_user_repositories/Repo-ck
@@ -27,19 +27,19 @@ First you'll need to setup the configuration file, simply by running ``linux-ck-
 The minimum options you'll have to modify will be the SUBARCH (the micro architectures you want to build) and probably the BUILD_DIR, which sets the location where the builds take place (don't worry, you don't have to download anything yourself). SUBARCH also can be modify by ``linux-ck-autobuild -a``
 
 Profiles:
-Use ``linux-ck-autobuild -n mypc1`` to add a new profile, then uncomment/edit desired parameters which should be differ from default profile. After editing you should write name of profile on desired order of compiling - ``linux-ck-autobuild -c``, then edit: ``PROFILES=( mypc1 linux-ck-autobuild )`` 
+Use ``linux-ck-autobuild -n mypc1`` to add a new profile, then uncomment/edit desired parameters which should be differ from default profile. After editing you should write name of profile on desired order of compiling - ``linux-ck-autobuild -c``, then edit: ``PROFILES=( mypc1 linux-ck-autobuild )``
 
 The configuration can be accessed at any time by running ``linux-ck-autobuild -c [profile_name]`` from a command line.
 
 If you want to fully automate the build script, enable the daemon by running:
 ```
 linux-ck-autobuild -c # Configure first required! Set EDITOR and other parameters as desired
-linux-ck-autobuild    # Check work of script and only then:  
+linux-ck-autobuild    # Check work of script and only then:
 sudo systemctl enable --now linux-ck-autobuild@$USER.timer
 ```
 ## Minimum requirements for building archlinux kernel (-ck)
-* CPU (x86_64). More cores - less compile time.
+* CPU (x86_64): any. More cores and MHz - less compile time.
 * RAM+SWAP: peak to 8Gb* for btf.o compile (since [5.7.1.arch1-1](https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/commit/2db27e8ef8a6ca7c801082dcad3ad3ddf42c424d))
 * Disk space: 25Gb*
 
-  *Or less, if you use [modprobed-db](https://wiki.archlinux.org/title/Modprobed-db), depends how many modules you need to compile. 
+  *Or less, if you use [modprobed-db](https://wiki.archlinux.org/title/Modprobed-db), depends how many modules you want to compile
