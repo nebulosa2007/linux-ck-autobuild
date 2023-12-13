@@ -61,33 +61,33 @@ EOF
 
 function default_conf {
     cat << EOF > $1
-# Since kernel version 5.1, that contains BTF option, for building the kernel package
-# needed above 8 Gb of RAM + SWAP. And 21 Gb of storage (or less if you using modprobed-db)
+# Since kernel version 5.7.1.arch-1, which contain BTF option, compilation of the kernel
+# requires about 8 Gb of RAM + SWAP. And 25 Gb of disk space (or less if you use modprobed-db)
 # You have been warned!
 
-# Preferred editor for editing settings.
+# Preferred editor for editing settings
 EDITOR="need_config"
 
-# For selecting another version of kernel. Format 'git_commit:version', e.g. 'bb1d3c5:6.6-2'
+# For selecting another version of kernel. Format is: 'git_commit:version', e.g. 'bb1d3c5:6.6-2'
 # Use 'git log --oneline' in BUILD_DIR to list them
 NEEDED_VERSION=""
 
 # The base directory on this system where the directories to sync are located. Don't add a slash at the end!
 BUILD_DIR="/home/$USER/.local/share/linux-ck-autobuild"
 
-# List of modules does not need to be compiled, space separated.
+# List of modules does not need to be compiled, space separated
 NOMODULES=""
 
 # User commands to run after compiling kernels, example: 'echo "Autobuild done" | mail -s "Autobuild \$kernel_version done" mail@domain.tld'
-# After build kernel only
+# Only after compilation the kernel with selected sub-architecture is complete
 USER_COMMAND1=""
-# After current profile 
+# After selected profile
 USER_COMMAND2=""
-# End of all
+# At the end
 USER_COMMAND3=""
 
-# Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends witch new module you need to compile.
-# Needed with Modprobed-db
+# Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends which NEW module you want to compile
+# Should be use with not empty 'localmodcfg' option only
 AUTONO="N N N N N"
 # db-file for modprobed
 DBFILE="linux-ck-autobuild.db"
@@ -100,40 +100,39 @@ REPO_CK_NAME="repo-ck"
 #REPO_CK_NAME="repo-ck"
 
 # If you have a local repository and wish to automatically add completed builds to it you can enable it by
-# setting USE_LOCAL_REPO to "y", leave empty to disable.
+# setting USE_LOCAL_REPO to "y", leave empty to disable
 USE_LOCAL_REPO=""
 # Location of your local repository and database. Don't add a slash at the end!
-# Hint: to add repo in pacman.conf:
+# Hint: to add local repo in local pacman.conf:
 # [<LOCAL_REPO_NAME>]
 # SigLevel = Optional TrustAll
 # Server = file:///<LOCAL_REPO>
 LOCAL_REPO="/home/$USER/.local/share/linux-ck-autobuild/local_repo"
 LOCAL_REPO_NAME="linux-ck"
 
-
 ####################################################################################
-##CK-specific options
+## -ck specific options
 
 # If you have the modprobe-db package installed and wish to use it, change to 'y' otherwise leave empty.
 # With the modprobe-db package only the modules that were listed by modprobe-db get build, significantly
 # reducing build times.
-# See: https://wiki.archlinux.org/title/Modprobed-db
+# See for more info: https://wiki.archlinux.org/title/Modprobed-db
 localmodcfg=""
 
 # Compile using clang rather than gcc, change to 'y' otherwise leave empty.
 clangbuild=""
 
-# List the sub architecture you want to build : ( 39 )
-# In case of multiple architectures separate them with a space like so: ( 39 40 41 )
+# List the sub-architecture you want to build in default profile
+# In case of multiple architectures separate them with a space: ( 39 40 41 )
 # Or use option -a for select from subarches list, see --help.
 subarch=( 39 )
 ####################################################################################
 
-#Other
-CONFIG_VERSION=0.7.2
 # Profiles
-# Set parameters in profiles files one by one. Fill the names of files space separated.
-PROFILES=( linux-ck-autobuild )
+# List profiles files one by one, space separated. Default is 'linux-ck-autobuild'
+PROFILES=( $program_name )
+
+CONFIG_VERSION=0.7.2
 EOF
 }
 
