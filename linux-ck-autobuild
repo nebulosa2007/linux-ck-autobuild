@@ -392,9 +392,8 @@ function main_program {
   CLANG"$(pp ${clangbuild} ": Yes" ": No")"
   Modules to not compile"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -mC )) > $logfile
-            buildstatus=$(echo -n $?": "; head -1 $logfile; tail -1 $logfile)
-            echo "Build status $buildstatus"
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $kernel_version"
+            buildstatus=$(echo -n $?": "; head -1 $logfile; tail -1 $logfile | sed 's/==> //g')
             eval $USER_COMMAND1
             echo
         else
