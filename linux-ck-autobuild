@@ -182,7 +182,7 @@ function edit_config {
 function new_profile {
     skip_parameters="(EDITOR|BUILD_DIR|USE_LOCAL_REPO|LOCAL_REPO|LOCAL_REPO_NAME|REPO_CK_MIRROR|REPO_CK_NAME|OnCalendar|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|CONFIG_VERSION|PROFILES)"
     if [ -n "$1" ]; then
-        grep -Ev "^(#|$)" /home/$USER/.config/$program_name/$program_name.conf | grep -Ev $skip_parameters | sed 's/^/# /g' > /home/$USER/.config/$program_name/$1.conf
+        grep -Ev "^(#|$)" /home/$USER/.config/$program_name/$program_name.conf | grep -Ev $skip_parameters > /home/$USER/.config/$program_name/$1.conf
         $EDITOR /home/$USER/.config/$program_name/$1.conf
     else
         echo "Name of new profile required!"
