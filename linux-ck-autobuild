@@ -387,9 +387,9 @@ function main_program {
             # Compile kernel
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build $kernel_version"
             echo "Compile parameters are:
-  Modprobed-db"$(pp ${localmodcfg} ": ${DBFILE}" ": No")"
-  CLANG"$(pp ${clangbuild} ": Yes" ": No")"
-  Modules to not compile"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
+  Modprobed-db file"$(pp ${localmodcfg} ": ${DBFILE}" ": No")"
+  Using Clang"$(pp ${clangbuild} ": Yes" ": No")"
+  Modules that are not compiled"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -mC )) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $kernel_version"
             buildstatus=$(echo -n $?": "; head -1 $logfile; tail -1 $logfile | sed 's/==> //g')
@@ -426,7 +426,7 @@ for profile in ${PROFILES[@]}; do
         echo "Profile $profile not found. Skipping"
         profile="linux-ck-autobuild"
     fi
-    echo -e "\n\nLoad profile: $profile.conf"
+    echo -e "\n\nProfile loaded: $profile.conf"
     main_program
     eval $USER_COMMAND2
     echo
