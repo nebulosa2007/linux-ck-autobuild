@@ -132,12 +132,12 @@ subarch=( 39 )
 # List profiles files one by one, space separated. Default is 'linux-ck-autobuild'
 PROFILES=( $program_name )
 
-CONFIG_VERSION=0.7.2
+CONFIG_VERSION=0.7.3
 EOF
 }
 
 
-VERSION=0.7.2
+VERSION=0.7.3
 
 
 function print_help {
