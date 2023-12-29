@@ -19,7 +19,7 @@ https://wiki.archlinux.org/title/Unofficial_user_repositories/Repo-ck
 ## Installing
 
 This package can be installed from the AUR:
-[linux-ck-autobuild-service](https://aur.archlinux.org/packages/linux-ck-autobuild-service)
+[linux-ck-autobuild](https://aur.archlinux.org/packages/linux-ck-autobuild)
 
 ## Usage
 First you'll need to setup the configuration file, simply by running ``linux-ck-autobuild`` from a command line. The script will notify you about configuration missing and will copy the default config to your home folder. Directions are given in the configuration file.
