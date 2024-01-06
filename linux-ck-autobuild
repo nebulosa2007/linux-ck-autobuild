@@ -400,16 +400,16 @@ function main_program {
 
 
 load_config
-if [ -n "$1" ]; then
-    case "$1" in
-    -h | --help ) print_help ;;
-    -c          ) edit_config $2 ;;
-    -l | --list ) ls $HOME/.config/$program_name/*.conf | grep -v $program_name.conf && exit 1 ;;
-    -n          ) new_profile $2 ;;
+
+case "$1" in
+    -h | --help ) print_help;;
+    -c          ) edit_config $2;;
+    -l | --list ) ls $HOME/.config/$program_name/*.conf | grep -v $program_name.conf && exit 1;;
+    -n          ) new_profile $2;;
     -a          ) set_subarches;;
-     *          ) echo "Option not found, try -h or --help" && exit 1 ;;
-    esac
-fi
+esac
+
+[ -n "$1" ] && echo "Option not found, try -h or --help" && exit 1
 
 : > $BUILD_DIR/.last_build
 for profile in ${PROFILES[@]}; do
