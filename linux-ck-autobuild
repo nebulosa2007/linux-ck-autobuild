@@ -325,7 +325,7 @@ function check_repo_ck {
 
 
 function pp {
-    [ -n "$1" ] && echo "$2" || echo "No"
+    [ -n "$1" ] && echo "$2" || echo "$3"
 }
 
 
@@ -383,12 +383,12 @@ function main_program {
             # Compile kernel
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build $kernel_version"
             echo "Compile parameters are:
-  Modprobed-db file: "$(pp ${localmodcfg} ${DBFILE})"
-  Using Clang: "$(pp ${clangbuild} "Yes")"
-  Modules that are not compiled: "$(pp ${NOMODULES} ${NOMODULES})
+  Modprobed-db file"$(pp ${localmodcfg} ": ${DBFILE}" ": No")"
+  Using Clang"$(pp ${clangbuild} ": Yes" ": No")"
+  Modules that are not compiled"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
             ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -mC )) > $logfile
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $kernel_version"
-            buildstatus=$(echo -n $?": "; head -1 $logfile; tail -1 $logfile | sed 's/==>//g')
+            buildstatus=$(echo -n $?": "; head -1 $logfile; tail -1 $logfile | sed 's/==> //g')
             eval $USER_COMMAND1
             echo
         else
