@@ -132,12 +132,12 @@ subarch=( 39 )
 # List profiles files one by one, space separated. Default is 'linux-ck-autobuild'
 PROFILES=( $program_name )
 
-CONFIG_VERSION=0.7.3
+CONFIG_VERSION=0.7.4
 EOF
 }
 
 
-VERSION=0.7.3
+VERSION=0.7.4
 
 
 function print_help {
@@ -256,6 +256,7 @@ function update_repo {
             mv $obsolete -t $LOCAL_REPO/archive 2>/dev/null && rm -f $LOCAL_REPO/$LOCAL_REPO_NAME.{db,files}* && moved="y"
             renew=$(ls -1 $LOCAL_REPO/archive/*.pkg.tar.zst | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'$LOCAL_REPO'/archive/&-x86_64.pkg.tar.zst|g')
             mv $renew -t $LOCAL_REPO 2>/dev/null && moved="y"
+            cd $BUILD_DIR/linux-ck && git clean -dfx
         else
             mv $BUILD_DIR/linux-ck/*.pkg.tar.zst $LOCAL_REPO 2>/dev/null && moved="y"
         fi
