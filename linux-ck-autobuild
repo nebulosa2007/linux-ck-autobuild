@@ -163,7 +163,7 @@ function edit_config {
             [ -r "$1" ] && $EDITOR "$1" || echo "No profile "$(basename "$1")" found"
         else
             $EDITOR /home/$USER/.config/$program_name/$program_name.conf
-            sed -i '/USER_COMMAND/s|\$|\\$|g' /home/$USER/.config/$program_name/$program_name.conf
+            sed -i '/USER_COMMAND/s|\$|\\$|g;/USER_COMMAND/s|\\\\|\\|g' /home/$USER/.config/$program_name/$program_name.conf
         fi
     else
         echo -e "No editor found, please set your editor in:\n/home/$USER/.config/$program_name/$program_name.conf"
@@ -214,7 +214,7 @@ function update_config {
 
     sed -i '/^#/!s|subarch=(.*)|subarch=( '"${subarch[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
     sed -i '/^#/!s|PROFILES=(.*)|PROFILES=( '"${PROFILES[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
-    sed -i '/USER_COMMAND/s|\$|\\$|g' /home/$USER/.config/$program_name/$program_name.conf
+    sed -i '/USER_COMMAND/s|\$|\\$|g;/USER_COMMAND/s|\\\\|\\|g' /home/$USER/.config/$program_name/$program_name.conf
     echo "Config updated!"
 }
 
