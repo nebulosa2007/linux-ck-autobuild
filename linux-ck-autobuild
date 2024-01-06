@@ -160,7 +160,8 @@ Options:
 function edit_config {
     if [ -f /usr/bin/$EDITOR ]; then
         if [ -n "$1" ]; then
-            [ -r "$1" ] && $EDITOR "$1" || echo "No profile "$(basename "$1")" found"
+            p=$(basename $1 .conf)
+            [ -r "/home/$USER/.config/$program_name/$p.conf" ] && $EDITOR "/home/$USER/.config/$program_name/$p.conf" || echo "No profile $p found"
         else
             $EDITOR /home/$USER/.config/$program_name/$program_name.conf
             sed -i '/USER_COMMAND/s|\$|\\$|g;/USER_COMMAND/s|\\\\|\\|g' /home/$USER/.config/$program_name/$program_name.conf
