@@ -171,8 +171,8 @@ function edit_config {
             p=$(basename $1 .conf)
             [ -r "/home/$USER/.config/$program_name/$p.conf" ] && $EDITOR "/home/$USER/.config/$program_name/$p.conf" || echo "No profile $p found"
         else
-            $EDITOR /home/$USER/.config/$program_name/$program_name.conf
-            sed -i '/USER_COMMAND/s|\$|\\$|g;/USER_COMMAND/s|\\\\|\\|g' /home/$USER/.config/$program_name/$program_name.conf
+            $EDITOR "/home/$USER/.config/$program_name/$program_name.conf"
+            sed -i '/USER_COMMAND/s|\$|\\$|g;/USER_COMMAND/s|\\\\|\\|g' "/home/$USER/.config/$program_name/$program_name.conf"
         fi
     else
         echo -e "No editor found, please set your editor in:\n/home/$USER/.config/$program_name/$program_name.conf"
@@ -185,9 +185,9 @@ function edit_config {
 function new_profile {
     skip_parameters="(EDITOR|BUILD_DIR|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|REPO_CK_MIRROR|REPO_CK_NAME|USE_LOCAL_REPO|LOCAL_REPO|LOCAL_REPO_NAME|CONFIG_VERSION|PROFILES)"
     p=$(basename $1 .conf)
-    if [ ! -w /home/$USER/.config/$program_name/$p.conf ]; then
-        grep -Ev "^(#|$)" /home/$USER/.config/$program_name/$program_name.conf | grep -Ev $skip_parameters > /home/$USER/.config/$program_name/$p.conf
-        $EDITOR /home/$USER/.config/$program_name/$p.conf
+    if [ ! -r "/home/$USER/.config/$program_name/$p.conf" ]; then
+        grep -Ev "^(#|$)" "/home/$USER/.config/$program_name/$program_name.conf" | grep -Ev $skip_parameters > "/home/$USER/.config/$program_name/$p.conf"
+        $EDITOR "/home/$USER/.config/$program_name/$p.conf"
     else
         echo "Profile $p exists already! Please choose another name or use -c option for edit"
         exit 1
@@ -199,15 +199,15 @@ function new_profile {
 function set_subarches {
     message="Default is Generic-x86-64 - number 39. See: https://wiki.archlinux.org/index.php/Repo-ck for more info"
     if [ -x "$(command -v fzf)" ]; then
-        archs=$(cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | sed 's/  / /g'| tr -d '\n' )
+        archs=$(cat "/home/$USER/.config/$program_name/subarches" | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | sed 's/  / /g'| tr -d '\n' )
     else
-        cat /home/$USER/.config/$program_name/subarches | cut -d "#" -f2
+        cat "/home/$USER/.config/$program_name/subarches" | cut -d "#" -f2
         echo -e "\n$message\n"
         archs=" 39"
         read -rp "Write numbers of desired arches above, space separated:" -e -i "${archs}" archs
     fi
     if [ -n "$archs" ]; then
-        sed -i '/^#/!s|subarch=(.*)|subarch=('"${archs[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
+        sed -i '/^#/!s|subarch=(.*)|subarch=('"${archs[*]}"' )|g' "/home/$USER/.config/$program_name/$program_name.conf"
         echo "Config updated!"
     fi
     exit 0
@@ -217,23 +217,23 @@ function set_subarches {
 function update_config {
     UPDATE=( EDITOR NEEDED_VERSION BUILD_DIR NOMODULES USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 AUTONO DBFILE REPO_CK_MIRROR REPO_CK_NAME USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME localmodcfg clangbuild )
 
-    mv /home/$USER/.config/$program_name/$program_name.conf /home/$USER/.config/$program_name/$program_name.old
-    default_conf /home/$USER/.config/$program_name/$program_name.conf
+    mv "/home/$USER/.config/$program_name/$program_name.conf" "/home/$USER/.config/$program_name/$program_name.old"
+    default_conf "/home/$USER/.config/$program_name/$program_name.conf"
 
     for item in ${!UPDATE[*]}; do
-        sed -i '/^#/!s|'${UPDATE[$item]}'=".*"|'${UPDATE[$item]}'="'"${!UPDATE[$item]}"'"|g' /home/$USER/.config/$program_name/$program_name.conf
+        sed -i '/^#/!s|'${UPDATE[$item]}'=".*"|'${UPDATE[$item]}'="'"${!UPDATE[$item]}"'"|g' "/home/$USER/.config/$program_name/$program_name.conf"
     done
 
-    sed -i '/^#/!s|subarch=(.*)|subarch=( '"${subarch[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
-    sed -i '/^#/!s|PROFILES=(.*)|PROFILES=( '"${PROFILES[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
-    sed -i '/USER_COMMAND/s|\$|\\$|g;/USER_COMMAND/s|\\\\|\\|g' /home/$USER/.config/$program_name/$program_name.conf
+    sed -i '/^#/!s|subarch=(.*)|subarch=( '"${subarch[*]}"' )|g'    "/home/$USER/.config/$program_name/$program_name.conf"
+    sed -i '/^#/!s|PROFILES=(.*)|PROFILES=( '"${PROFILES[*]}"' )|g' "/home/$USER/.config/$program_name/$program_name.conf"
+    sed -i '/USER_COMMAND/s|\$|\\$|g;/USER_COMMAND/s|\\\\|\\|g'     "/home/$USER/.config/$program_name/$program_name.conf"
     echo "Config updated!"
 }
 
 
 function load_config {
-    if [ -r /home/$USER/.config/$program_name/$program_name.conf ]; then
-        .   /home/$USER/.config/$program_name/$program_name.conf
+    if [ -r "/home/$USER/.config/$program_name/$program_name.conf" ]; then
+        .   "/home/$USER/.config/$program_name/$program_name.conf"
         if [ "$CONFIG_VERSION" == "$VERSION" ]; then
             if [[ -z $EDITOR || -z $BUILD_DIR || -z $subarch ]]; then
                 echo "ERROR: One or more settings are missing, please check your configuration."
@@ -241,13 +241,13 @@ function load_config {
                 edit_config
             fi
         else
-            subarches /home/$USER/.config/$program_name/subarches
+            subarches "/home/$USER/.config/$program_name/subarches"
             update_config
         fi
     else
-        mkdir -p     /home/$USER/.config/$program_name/
-        default_conf /home/$USER/.config/$program_name/$program_name.conf
-        subarches    /home/$USER/.config/$program_name/subarches
+        mkdir -p     "/home/$USER/.config/$program_name"
+        default_conf "/home/$USER/.config/$program_name/$program_name.conf"
+        subarches    "/home/$USER/.config/$program_name/subarches"
         edit_config
     fi
 }
@@ -255,44 +255,44 @@ function load_config {
 
 function update_repo {
     if [ -n "$USE_LOCAL_REPO" ]; then
-        mkdir -p $LOCAL_REPO
-        mkdir -p $LOCAL_REPO/archive
+        mkdir -p "$LOCAL_REPO"
+        mkdir -p "$LOCAL_REPO/archive"
         moved="n"
         if [ "$1" == "cleanup" ];then
-            obsolete=$(ls -1 $LOCAL_REPO/*.pkg.tar.zst | grep -v -f "$BUILD_DIR/.last_build")
-            mv $obsolete -t $LOCAL_REPO/archive 2>/dev/null && rm -f $LOCAL_REPO/$LOCAL_REPO_NAME.{db,files}* && moved="y"
-            renew=$(ls -1 $LOCAL_REPO/archive/*.pkg.tar.zst | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'$LOCAL_REPO'/archive/&-x86_64.pkg.tar.zst|g')
-            mv $renew -t $LOCAL_REPO 2>/dev/null && moved="y"
-            cd $BUILD_DIR/linux-ck && git clean -dfx
+            obsolete=$(ls -1 "$LOCAL_REPO"/*.pkg.tar.zst | grep -v -f "$BUILD_DIR/.last_build")
+            mv $obsolete -t "$LOCAL_REPO/archive" 2>/dev/null && rm -f "$LOCAL_REPO/$LOCAL_REPO_NAME".{db,files}* && moved="y"
+            renew=$(ls -1 "$LOCAL_REPO/archive"/*.pkg.tar.zst | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'$LOCAL_REPO'/archive/&-x86_64.pkg.tar.zst|g')
+            mv $renew -t "$LOCAL_REPO" 2>/dev/null && moved="y"
+            cd "$BUILD_DIR/linux-ck" && git clean -dfx
         else
-            mv $BUILD_DIR/linux-ck/*.pkg.tar.zst $LOCAL_REPO 2>/dev/null && moved="y"
+            mv "$BUILD_DIR/linux-ck"/*.pkg.tar.zst "$LOCAL_REPO" 2>/dev/null && moved="y"
         fi
         if [ "$moved" == "y" ]; then
-            last_versions=$(ls -1 $LOCAL_REPO/*.pkg.tar.zst | sort -Vr | sort -ut. -k1,1)
-            old_versions=$(ls -1 $LOCAL_REPO/*.pkg.tar.zst | grep -v "$last_versions")
-            repo-add -q -n --nocolor $LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz $last_versions && mv $old_versions -t $LOCAL_REPO/archive 2>/dev/null
+            last_versions=$(ls -1 "$LOCAL_REPO"/*.pkg.tar.zst | sort -Vr | sort -ut. -k1,1)
+            old_versions=$(ls -1  "$LOCAL_REPO"/*.pkg.tar.zst | grep -v "$last_versions")
+            repo-add -q -n --nocolor "$LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz" $last_versions && mv $old_versions -t "$LOCAL_REPO/archive" 2>/dev/null
         fi
     fi
 }
 
 
 function check_build_dir {
-    if [ -r $BUILD_DIR/linux-ck/PKGBUILD ]; then
-        git -C $BUILD_DIR/linux-ck reset --hard --quiet
-        cd $BUILD_DIR/linux-ck
+    if [ -r "$BUILD_DIR/linux-ck/PKGBUILD" ]; then
+        git -C "$BUILD_DIR/linux-ck" reset --hard --quiet
+        cd "$BUILD_DIR/linux-ck"
         if [ -n "$NEEDED_VERSION" ]; then
             git -c advice.detachedHead=false checkout $(echo ${NEEDED_VERSION%:*})
         else
             git checkout --quiet master
-            git -C $BUILD_DIR/linux-ck pull --quiet
+            git -C "$BUILD_DIR/linux-ck" pull --quiet
         fi
     else
         echo "PKGBUILD not found at configured location, seting up..."
-        mkdir -p $BUILD_DIR
+        mkdir -p "$BUILD_DIR"
         echo "Cloning AUR package"
-        git -C $BUILD_DIR clone https://aur.archlinux.org/linux-ck.git --quiet
+        git -C "$BUILD_DIR" clone "https://aur.archlinux.org/linux-ck.git" --quiet
         echo "Adding pgp keys"
-        sudo pacman-key -r 5EE46C4C --keyserver keyserver.ubuntu.com && sudo pacman-key --lsign-key 5EE46C4C # Graysky
+        sudo pacman-key -r 5EE46C4C --keyserver "keyserver.ubuntu.com" && sudo pacman-key --lsign-key 5EE46C4C # Graysky
         gpg --recv-keys 79BE3E4300411886 # Linus Torvalds
         gpg --recv-keys 38DBBDC86092693E # Greg Kroah-Hartman
         echo "Install dependencies"
@@ -315,21 +315,21 @@ function check_repo_ck {
        return
     elif [ -z "$localmodcfg" ]; then
         curl_cmd="curl --head --fail --silent"
-        kernel=$($curl_cmd  $REPO_CK_MIRROR/$package_kernel  | grep 'HTTP/2 200')
-        headers=$($curl_cmd $REPO_CK_MIRROR/$package_headers | grep 'HTTP/2 200')
+        kernel=$($curl_cmd  "$REPO_CK_MIRROR/$package_kernel"  | grep 'HTTP/2 200')
+        headers=$($curl_cmd "$REPO_CK_MIRROR/$package_headers" | grep 'HTTP/2 200')
 
-        if [[ -n $kernel && $headers ]]; then
+        if [[ -n "$kernel" && "$headers" ]]; then
             #Get sha256sums
-            curl -sL $REPO_CK_MIRROR/$REPO_CK_NAME.db.tar.gz | tar xJ --one-top-level=/tmp/linux-ck-hashes
-            sha256sums=$(grep -REA1 "%(FILENAME|SHA256SUM)%" /tmp/linux-ck-hashes | sed 's/ --//g;s/%SHA256SUM%//g;s/%FILENAME%//g;s/\n//g')
-            rm -fr /tmp/linux-ck-hashes
+            curl -sL "$REPO_CK_MIRROR/$REPO_CK_NAME.db.tar.gz" | tar xJ --one-top-level="/tmp/linux-ck-hashes"
+            sha256sums=$(grep -REA1 "%(FILENAME|SHA256SUM)%" "/tmp/linux-ck-hashes" | sed 's/ --//g;s/%SHA256SUM%//g;s/%FILENAME%//g;s/\n//g')
+            rm -fr "/tmp/linux-ck-hashes"
 
             echo "mirroring from $REPO_CK_MIRROR"
-            cd $BUILD_DIR/linux-ck
-            for package in $package_kernel $package_headers; do
-                curl -C - $REPO_CK_MIRROR/$package -o $package.remote
+            cd "$BUILD_DIR/linux-ck"
+            for package in "$package_kernel" "$package_headers"; do
+                curl -C - "$REPO_CK_MIRROR/$package" -o "$package.remote"
                 sha256sum_check=$(echo $sha256sums | grep -Po '(?<='$package' -- )([^ ]*) \K(\S+)'| grep -Po '(?<=desc-)(\S+)')
-                [ `echo "$sha256sum_check $package.remote" | sha256sum --check - --status` ] || mv $package{.remote,}
+                [ `echo "$sha256sum_check $package.remote" | sha256sum --check - --status` ] || mv "$package{.remote,}"
             done
         fi
     fi
@@ -343,9 +343,9 @@ function pp {
 
 function main_program {
     check_build_dir
-    . /home/$USER/.config/$program_name/subarches
+    . "/home/$USER/.config/$program_name/subarches"
 
-    latest_version=$([ -n "$NEEDED_VERSION" ] && echo ${NEEDED_VERSION#*:} || curl -s https://aur.archlinux.org/packages/linux-ck | grep -Po '(?<=linux-ck ).*(?=</h2)')
+    latest_version=$([ -n "$NEEDED_VERSION" ] && echo ${NEEDED_VERSION#*:} || curl -s "https://aur.archlinux.org/packages/linux-ck" | grep -Po '(?<=linux-ck ).*(?=</h2)')
     [ "$latest_version" == "" ] && { echo "Error: latest version not defined from AUR. Check settings or connection!"; exit 1; }
 
     for element in "${subarch[@]}"; do
@@ -355,41 +355,41 @@ function main_program {
 
         kernel_version=linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-$latest_version
         headers_version=linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-headers-$latest_version
-        pkgbuild=$BUILD_DIR/linux-ck/PKGBUILD
-        config=$BUILD_DIR/linux-ck/config
-        logfile=$BUILD_DIR/$kernel_version.log
+        pkgbuild="$BUILD_DIR/linux-ck/PKGBUILD"
+        config="$BUILD_DIR/linux-ck/config"
+        logfile="$BUILD_DIR/$kernel_version.log"
 
         found=$(check_repo_ck)
         if [ -z "$found" ]; then
 
             # PKGBUILD file
             if [ -z "$localmodcfg" ]; then
-                sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'' $pkgbuild
+                sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'' "$pkgbuild"
                 AUTONO=""
             else
-                sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'-modprobed' $pkgbuild
-                sed -i '/_localmodcfg=/c\_localmodcfg='$localmodcfg'' $pkgbuild
-                sed -i 's|/modprobed.db|/'$program_name'/'$DBFILE'|g' $pkgbuild
+                sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'-modprobed' "$pkgbuild"
+                sed -i '/_localmodcfg=/c\_localmodcfg='$localmodcfg'' "$pkgbuild"
+                sed -i 's|/modprobed.db|/'$program_name'/'$DBFILE'|g' "$pkgbuild"
             fi
-            sed -i '/_subarch=/c\_subarch='$element'' $pkgbuild
+            sed -i '/_subarch=/c\_subarch='$element'' "$pkgbuild"
             if [ -n "$clangbuild" ]; then
-                sed -i '/_clangbuild=/c\_clangbuild='$clangbuild'' $pkgbuild
+                sed -i '/_clangbuild=/c\_clangbuild='$clangbuild'' "$pkgbuild"
             fi
-            for patch in $( ls -1 $BUILD_DIR/*.patch 2>/dev/null | sort -r ) ; do
-                sed -i '/  diff -u ..\/config .config || :/c\  diff -u ..\/config .config || :\n\n  patch -Np1 < "..\/..\/..\/'$(basename $patch)'"' $pkgbuild
+            for patch in $( ls -1 "$BUILD_DIR"/*.patch 2>/dev/null | sort -r ) ; do
+                sed -i '/  diff -u ..\/config .config || :/c\  diff -u ..\/config .config || :\n\n  patch -Np1 < "..\/..\/..\/'$(basename $patch)'"' "$pkgbuild"
             done
 
             # config file
             if [ -n "$NOMODULES" ]; then
-                for module in $NOMODULES ; do
-                    sed -i 's/'$module'=m/#'$module' is not set/' $config
+                for module in "$NOMODULES" ; do
+                    sed -i 's/'$module'=m/#'$module' is not set/' "$config"
                 done
                 editconfig="y"
             fi
             if [ -n "editconfig" ]; then
-                oldsha256sum=$(grep -A2 'sha256sums' $pkgbuild | tail -1 | cut -d"'" -f2)
-                newsha256sum=$(sha256sum $config | cut -d" " -f1)
-                sed -i 's/'$oldsha256sum'/'$newsha256sum'/' $pkgbuild
+                oldsha256sum=$(grep -A2 'sha256sums' "$pkgbuild" | tail -1 | cut -d"'" -f2)
+                newsha256sum=$(sha256sum "$config" | cut -d" " -f1)
+                sed -i 's/'$oldsha256sum'/'$newsha256sum'/' "$pkgbuild"
             fi
 
             # Compile kernel
@@ -398,17 +398,17 @@ function main_program {
   Modprobed-db file"$(pp ${localmodcfg} ": ${DBFILE}" ": No")"
   Using Clang"$(pp ${clangbuild} ": Yes" ": No")"
   Modules that are not compiled"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
-            ( cd $BUILD_DIR/linux-ck && ( echo $AUTONO | tr ' ' '\n' | makepkg -mC )) > $logfile
+            ( cd "$BUILD_DIR/linux-ck" && ( echo $AUTONO | tr ' ' '\n' | makepkg -mC )) > "$logfile"
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $kernel_version"
-            buildstatus=$(echo -n $?": "; head -1 $logfile; tail -1 $logfile | sed 's/==> //g')
+            buildstatus=$(echo -n $?": "; head -1 "$logfile"; tail -1 "$logfile" | sed 's/==>//g')
             eval $USER_COMMAND1
             echo
         else
-            echo "$(date +"%Y-%m-%d_%H:%M") Kernel $kernel_version $found" > $logfile
+            echo "$(date +"%Y-%m-%d_%H:%M") Kernel $kernel_version $found" > "$logfile"
         fi
         update_repo
-        echo "$kernel_version" >> $BUILD_DIR/.last_build
-        echo "$headers_version" >> $BUILD_DIR/.last_build
+        echo "$kernel_version" >> "$BUILD_DIR/.last_build"
+        echo "$headers_version" >> "$BUILD_DIR/.last_build"
     done
 }
 
@@ -417,10 +417,10 @@ load_config
 
 getopts ":hcln:a" option
 
-case $option in
+case "$option" in
     h ) print_help;;
     c ) edit_config $2;;
-    l ) ls $HOME/.config/$program_name/*.conf | grep -v $program_name.conf && exit 0;;
+    l ) ls "$HOME/.config/$program_name"/*.conf | grep -v "$program_name.conf" && exit 0;;
     n ) new_profile $OPTARG;;
     a ) set_subarches;;
     : ) echo "Option requres an secord argument -- $OPTARG" && exit 1;;
