@@ -6,7 +6,7 @@
 # Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
 
 
-program_name="linux-ck-autobuild"
+program_name=${0##*/}
 
 
 function subarches {
@@ -141,17 +141,25 @@ VERSION=0.7.4
 
 
 function print_help {
-    echo "
-$program_name, version $VERSION for headless machines.
+    underline=`tput smul`
+    nounderline=`tput rmul`
+    echo "A tool to automatically build linux-ck kernels.
 
-A tool to automatically build -ck kernels.
+${underline}Usage:${nounderline} $program_name [OPTIONS] [profile_name]
 
-Options:
--h, --help            Display this help
--c [profile_name]     Create and/or set options, default or selected profilename file
--n <profile_name>     Create new profile
--l, --list            List available profiles
--a                    Choose desired subarches
+${underline}Options:${nounderline}
+   -c [profile_name]     Create and/or set options, default or selected profilename file
+   -n <profile_name>     Create new profile
+   -l, --list            List available profiles
+   -a                    Choose desired subarches
+
+   -h, --help            Print help information
+
+
+Linux-ck kernels: <https://wiki.archlinux.org/title/Unofficial_user_repositories/Repo-ck>
+More info about autobuild script: <https://github.com/nebulosa2007/linux-ck-autobuild>
+
+Version $VERSION
 "
     exit 1
 }
