@@ -150,10 +150,10 @@ ${underline}Usage:${nounderline} $program_name [OPTIONS] [profile_name]
 ${underline}Options:${nounderline}
    -c [profile_name]     Create and/or set options, default or selected profilename file
    -n <profile_name>     Create new profile
-   -l, --list            List available profiles
+   -l                    List available profiles
    -a                    Choose desired subarches
 
-   -h, --help            Print help information
+   -h                    Print help information
 
 
 Linux-ck kernels: <https://wiki.archlinux.org/title/Unofficial_user_repositories/Repo-ck>
