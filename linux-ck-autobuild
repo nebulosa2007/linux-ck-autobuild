@@ -184,11 +184,12 @@ function edit_config {
 
 function new_profile {
     skip_parameters="(EDITOR|BUILD_DIR|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|REPO_CK_MIRROR|REPO_CK_NAME|USE_LOCAL_REPO|LOCAL_REPO|LOCAL_REPO_NAME|CONFIG_VERSION|PROFILES)"
-    if [ -n "$1" ]; then
-        grep -Ev "^(#|$)" /home/$USER/.config/$program_name/$program_name.conf | grep -Ev $skip_parameters > /home/$USER/.config/$program_name/$1.conf
-        $EDITOR /home/$USER/.config/$program_name/$1.conf
+    p=$(basename $1 .conf)
+    if [ ! -w /home/$USER/.config/$program_name/$p.conf ]; then
+        grep -Ev "^(#|$)" /home/$USER/.config/$program_name/$program_name.conf | grep -Ev $skip_parameters > /home/$USER/.config/$program_name/$p.conf
+        $EDITOR /home/$USER/.config/$program_name/$p.conf
     else
-        echo "Name of new profile required!"
+        echo "Profile $p exists already! Please choose another name or use -c option for edit"
         exit 1
     fi
     exit 0
