@@ -161,7 +161,7 @@ More info about autobuild script: <https://github.com/nebulosa2007/linux-ck-auto
 
 Version $VERSION
 "
-    exit 1
+    exit 0
 }
 
 
@@ -176,8 +176,9 @@ function edit_config {
         fi
     else
         echo -e "No editor found, please set your editor in:\n/home/$USER/.config/$program_name/$program_name.conf"
+        exit 1
     fi
-    exit 1
+    exit 0
 }
 
 
@@ -188,8 +189,9 @@ function new_profile {
         $EDITOR /home/$USER/.config/$program_name/$1.conf
     else
         echo "Name of new profile required!"
+        exit 1
     fi
-    exit 1
+    exit 0
 }
 
 
@@ -207,7 +209,7 @@ function set_subarches {
         sed -i '/^#/!s|subarch=(.*)|subarch=('"${archs[*]}"' )|g' /home/$USER/.config/$program_name/$program_name.conf
         echo "Config updated!"
     fi
-    exit 1
+    exit 0
 }
 
 
@@ -417,7 +419,7 @@ getopts ":hcln:a" option
 case $option in
     h ) print_help;;
     c ) edit_config $2;;
-    l ) ls $HOME/.config/$program_name/*.conf | grep -v $program_name.conf && exit 1;;
+    l ) ls $HOME/.config/$program_name/*.conf | grep -v $program_name.conf && exit 0;;
     n ) new_profile $OPTARG;;
     a ) set_subarches;;
     : ) echo "Option requres an secord argument -- $OPTARG" && exit 1;;
@@ -437,8 +439,6 @@ for profile in ${PROFILES[@]}; do
     echo -e "\n\nProfile loaded: $profile.conf"
     main_program
     eval $USER_COMMAND2
-    echo
 done
 update_repo "cleanup"
 eval $USER_COMMAND3
-echo
