@@ -418,6 +418,8 @@ load_config
 
 getopts ":hcln:a" option
 
+echo $option ${OPTARG}
+
 case "$option" in
     h ) print_help;;
     c ) edit_config $2;;
@@ -425,8 +427,7 @@ case "$option" in
     n ) new_profile $OPTARG;;
     a ) set_subarches;;
     : ) echo "Option requres an secord argument -- $OPTARG" && exit 1;;
-    ? ) ;;
-    * ) echo "Option not found, try -h or --help" && exit 1;;
+    ? ) [ -n ${OPTARG} ] && echo "Option not found, try -h or --help" && exit 1;;
 esac
 
 : > $BUILD_DIR/.last_build
