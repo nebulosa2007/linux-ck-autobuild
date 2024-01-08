@@ -75,9 +75,6 @@ NEEDED_VERSION=""
 # The base directory on this system where the directories to sync are located. Don't add a slash at the end!
 BUILD_DIR="/home/$USER/.local/share/linux-ck-autobuild"
 
-# The config directory. Don't add a slash at the end!
-CONFIG_DIR="/home/$USER/.config/$program_name"
-
 # List of modules does not need to be compiled, space separated
 NOMODULES=""
 
@@ -142,6 +139,8 @@ EOF
 
 VERSION=0.7.5
 
+CONFIG_DIR="/home/$USER/.config/$program_name"
+
 
 function print_help {
     underline=`tput smul`
@@ -186,7 +185,7 @@ function edit_config {
 
 
 function new_profile {
-    skip_parameters="(EDITOR|BUILD_DIR|CONFIG_DIR|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|REPO_CK_MIRROR|REPO_CK_NAME|USE_LOCAL_REPO|LOCAL_REPO|LOCAL_REPO_NAME|CONFIG_VERSION|PROFILES)"
+    skip_parameters="(EDITOR|BUILD_DIR|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|REPO_CK_MIRROR|REPO_CK_NAME|USE_LOCAL_REPO|LOCAL_REPO|LOCAL_REPO_NAME|CONFIG_VERSION|PROFILES)"
     p=$(basename $1 .conf)
     if [ ! -r "$CONFIG_DIR/$p.conf" ]; then
         grep -Ev "^(#|$)" "$CONFIG_DIR/$program_name.conf" | grep -Ev $skip_parameters > "$CONFIG_DIR/$p.conf"
@@ -218,7 +217,7 @@ function set_subarches {
 
 
 function update_config {
-    UPDATE=( EDITOR NEEDED_VERSION BUILD_DIR CONFIG_DIR USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 AUTONO DBFILE REPO_CK_MIRROR REPO_CK_NAME USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME localmodcfg clangbuild )
+    UPDATE=( EDITOR NEEDED_VERSION BUILD_DIR USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 AUTONO DBFILE REPO_CK_MIRROR REPO_CK_NAME USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME localmodcfg clangbuild )
 
     mv "$CONFIG_DIR/$program_name.conf" "$CONFIG_DIR/$program_name.old"
     default_conf "$CONFIG_DIR/$program_name.conf"
@@ -414,7 +413,6 @@ function main_program {
         echo "$headers_version" >> "$BUILD_DIR/.last_build"
     done
 }
-
 
 load_config
 
