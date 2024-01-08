@@ -421,7 +421,7 @@ getopts ":hcln:a" option
 case "$option" in
     h ) print_help;;
     c ) edit_config $2;;
-    l ) ls "$HOME/.config/$program_name"/*.conf | grep -v "$program_name.conf" && exit 0;;
+    l ) ls "$HOME/.config/$program_name"/*.conf | grep -v "$program_name.conf" ||  echo "No additional profiles found. Use -c option instead for edit" ; exit 0;;
     n ) new_profile $OPTARG;;
     a ) set_subarches;;
     : ) echo "Option requres an secord argument -- $OPTARG" && exit 1;;
