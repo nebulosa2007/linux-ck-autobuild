@@ -75,6 +75,9 @@ NEEDED_VERSION=""
 # The base directory on this system where the directories to sync are located. Don't add a slash at the end!
 BUILD_DIR="/home/$USER/.local/share/linux-ck-autobuild"
 
+# The config directory. Don't add a slash at the end!
+CONFIG_DIR="/home/$USER/.config/$program_name"
+
 # List of modules does not need to be compiled, space separated
 NOMODULES=""
 
@@ -132,12 +135,12 @@ subarch=( 39 )
 # List profiles files one by one, space separated. Default is 'linux-ck-autobuild'
 PROFILES=( $program_name )
 
-CONFIG_VERSION=0.7.4
+CONFIG_VERSION=0.7.5
 EOF
 }
 
 
-VERSION=0.7.4
+VERSION=0.7.5
 
 
 function print_help {
@@ -169,13 +172,13 @@ function edit_config {
     if [ -f /usr/bin/$EDITOR ]; then
         if [ -n "$1" ]; then
             p=$(basename $1 .conf)
-            [ -r "/home/$USER/.config/$program_name/$p.conf" ] && $EDITOR "/home/$USER/.config/$program_name/$p.conf" || echo "No profile $p found"
+            [ -r "$CONFIG_DIR/$p.conf" ] && $EDITOR "$CONFIG_DIR/$p.conf" || echo "No profile $p found"
         else
-            $EDITOR "/home/$USER/.config/$program_name/$program_name.conf"
-            sed -i '/USER_COMMAND/s|\$|\\$|g;/USER_COMMAND/s|\\\\|\\|g' "/home/$USER/.config/$program_name/$program_name.conf"
+            $EDITOR "$CONFIG_DIR/$program_name.conf"
+            sed -i '/USER_COMMAND/s|\$|\\$|g;/USER_COMMAND/s|\\\\|\\|g' "$CONFIG_DIR/$program_name.conf"
         fi
     else
-        echo -e "No editor found, please set your editor in:\n/home/$USER/.config/$program_name/$program_name.conf"
+        echo -e "No editor found, please set your editor in:\n$CONFIG_DIR/$program_name.conf"
         exit 1
     fi
     exit 0
@@ -183,11 +186,11 @@ function edit_config {
 
 
 function new_profile {
-    skip_parameters="(EDITOR|BUILD_DIR|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|REPO_CK_MIRROR|REPO_CK_NAME|USE_LOCAL_REPO|LOCAL_REPO|LOCAL_REPO_NAME|CONFIG_VERSION|PROFILES)"
+    skip_parameters="(EDITOR|BUILD_DIR|CONFIG_DIR|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|REPO_CK_MIRROR|REPO_CK_NAME|USE_LOCAL_REPO|LOCAL_REPO|LOCAL_REPO_NAME|CONFIG_VERSION|PROFILES)"
     p=$(basename $1 .conf)
-    if [ ! -r "/home/$USER/.config/$program_name/$p.conf" ]; then
-        grep -Ev "^(#|$)" "/home/$USER/.config/$program_name/$program_name.conf" | grep -Ev $skip_parameters > "/home/$USER/.config/$program_name/$p.conf"
-        $EDITOR "/home/$USER/.config/$program_name/$p.conf"
+    if [ ! -r "$CONFIG_DIR/$p.conf" ]; then
+        grep -Ev "^(#|$)" "$CONFIG_DIR/$program_name.conf" | grep -Ev $skip_parameters > "$CONFIG_DIR/$p.conf"
+        $EDITOR "$CONFIG_DIR/$p.conf"
     else
         echo "Profile $p exists already! Please choose another name or use -c option for edit"
         exit 1
@@ -199,15 +202,15 @@ function new_profile {
 function set_subarches {
     message="Default is Generic-x86-64 - number 39. See: https://wiki.archlinux.org/index.php/Repo-ck for more info"
     if [ -x "$(command -v fzf)" ]; then
-        archs=$(cat "/home/$USER/.config/$program_name/subarches" | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | sed 's/  / /g'| tr -d '\n' )
+        archs=$(cat "$CONFIG_DIR/subarches" | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | sed 's/  / /g'| tr -d '\n' )
     else
-        cat "/home/$USER/.config/$program_name/subarches" | cut -d "#" -f2
+        cat "$CONFIG_DIR/subarches" | cut -d "#" -f2
         echo -e "\n$message\n"
         archs=" 39"
         read -rp "Write numbers of desired arches above, space separated:" -e -i "${archs}" archs
     fi
     if [ -n "$archs" ]; then
-        sed -i '/^#/!s|subarch=(.*)|subarch=('"${archs[*]}"' )|g' "/home/$USER/.config/$program_name/$program_name.conf"
+        sed -i '/^#/!s|subarch=(.*)|subarch=('"${archs[*]}"' )|g' "$CONFIG_DIR/$program_name.conf"
         echo "Config updated!"
     fi
     exit 0
@@ -215,25 +218,25 @@ function set_subarches {
 
 
 function update_config {
-    UPDATE=( EDITOR NEEDED_VERSION BUILD_DIR NOMODULES USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 AUTONO DBFILE REPO_CK_MIRROR REPO_CK_NAME USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME localmodcfg clangbuild )
+    UPDATE=( EDITOR NEEDED_VERSION BUILD_DIR CONFIG_DIR USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 AUTONO DBFILE REPO_CK_MIRROR REPO_CK_NAME USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME localmodcfg clangbuild )
 
-    mv "/home/$USER/.config/$program_name/$program_name.conf" "/home/$USER/.config/$program_name/$program_name.old"
-    default_conf "/home/$USER/.config/$program_name/$program_name.conf"
+    mv "$CONFIG_DIR/$program_name.conf" "$CONFIG_DIR/$program_name.old"
+    default_conf "$CONFIG_DIR/$program_name.conf"
 
     for item in ${!UPDATE[*]}; do
-        sed -i '/^#/!s|'${UPDATE[$item]}'=".*"|'${UPDATE[$item]}'="'"${!UPDATE[$item]}"'"|g' "/home/$USER/.config/$program_name/$program_name.conf"
+        sed -i '/^#/!s|'${UPDATE[$item]}'=".*"|'${UPDATE[$item]}'="'"${!UPDATE[$item]}"'"|g' "$CONFIG_DIR/$program_name.conf"
     done
 
-    sed -i '/^#/!s|subarch=(.*)|subarch=( '"${subarch[*]}"' )|g'    "/home/$USER/.config/$program_name/$program_name.conf"
-    sed -i '/^#/!s|PROFILES=(.*)|PROFILES=( '"${PROFILES[*]}"' )|g' "/home/$USER/.config/$program_name/$program_name.conf"
-    sed -i '/USER_COMMAND/s|\$|\\$|g;/USER_COMMAND/s|\\\\|\\|g'     "/home/$USER/.config/$program_name/$program_name.conf"
+    sed -i '/^#/!s|subarch=(.*)|subarch=( '"${subarch[*]}"' )|g'    "$CONFIG_DIR/$program_name.conf"
+    sed -i '/^#/!s|PROFILES=(.*)|PROFILES=( '"${PROFILES[*]}"' )|g' "$CONFIG_DIR/$program_name.conf"
+    sed -i '/USER_COMMAND/s|\$|\\$|g;/USER_COMMAND/s|\\\\|\\|g'     "$CONFIG_DIR/$program_name.conf"
     echo "Config updated!"
 }
 
 
 function load_config {
-    if [ -r "/home/$USER/.config/$program_name/$program_name.conf" ]; then
-        .   "/home/$USER/.config/$program_name/$program_name.conf"
+    if [ -r "$CONFIG_DIR/$program_name.conf" ]; then
+        .   "$CONFIG_DIR/$program_name.conf"
         if [ "$CONFIG_VERSION" == "$VERSION" ]; then
             if [[ -z $EDITOR || -z $BUILD_DIR || -z $subarch ]]; then
                 echo "ERROR: One or more settings are missing, please check your configuration."
@@ -241,13 +244,13 @@ function load_config {
                 edit_config
             fi
         else
-            subarches "/home/$USER/.config/$program_name/subarches"
+            subarches "$CONFIG_DIR/subarches"
             update_config
         fi
     else
-        mkdir -p     "/home/$USER/.config/$program_name"
-        default_conf "/home/$USER/.config/$program_name/$program_name.conf"
-        subarches    "/home/$USER/.config/$program_name/subarches"
+        mkdir -p     "$CONFIG_DIR"
+        default_conf "$CONFIG_DIR/$program_name.conf"
+        subarches    "$CONFIG_DIR/subarches"
         edit_config
     fi
 }
@@ -343,7 +346,7 @@ function pp {
 
 function main_program {
     check_build_dir
-    . "/home/$USER/.config/$program_name/subarches"
+    . "$CONFIG_DIR/subarches"
 
     latest_version=$([ -n "$NEEDED_VERSION" ] && echo ${NEEDED_VERSION#*:} || curl -s "https://aur.archlinux.org/packages/linux-ck" | grep -Po '(?<=linux-ck ).*(?=</h2)')
     [ "$latest_version" == "" ] && { echo "Error: latest version not defined from AUR. Check settings or connection!"; exit 1; }
@@ -431,8 +434,8 @@ esac
 : > $BUILD_DIR/.last_build
 for profile in ${PROFILES[@]}; do
     load_config
-    if [ -r "/home/$USER/.config/$program_name/$profile.conf" ]; then
-        . "/home/$USER/.config/$program_name/$profile.conf"
+    if [ -r "$CONFIG_DIR/$profile.conf" ]; then
+        . "$CONFIG_DIR/$profile.conf"
     else
         echo "Profile $profile not found. Skipping"
         profile="linux-ck-autobuild"
