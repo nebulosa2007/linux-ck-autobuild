@@ -163,7 +163,6 @@ More info about autobuild script: <https://github.com/nebulosa2007/linux-ck-auto
 
 Version $VERSION
 "
-    exit 0
 }
 
 
@@ -180,7 +179,6 @@ function edit_config {
         echo -e "No editor found, please set your editor in:\n$CONFIG_DIR/$program_name.conf"
         exit 1
     fi
-    exit 0
 }
 
 
@@ -194,7 +192,6 @@ function new_profile {
         echo "Profile $p exists already! Please choose another name or use -c option for edit"
         exit 1
     fi
-    exit 0
 }
 
 
@@ -212,7 +209,6 @@ function set_subarches {
         sed -i '/^#/!s|subarch=(.*)|subarch=('"${archs[*]}"' )|g' "$CONFIG_DIR/$program_name.conf"
         echo "Config updated!"
     fi
-    exit 0
 }
 
 
@@ -418,12 +414,10 @@ load_config
 
 getopts ":hcln:a" option
 
-echo $option ${OPTARG}
-
 case "$option" in
     h ) print_help;;
     c ) edit_config $2;;
-    l ) ls "$HOME/.config/$program_name"/*.conf | grep -v "$program_name.conf" ||  echo "No additional profiles found. Use -c option instead for edit" ; exit 0;;
+    l ) ls "$HOME/.config/$program_name"/*.conf | grep -v "$program_name.conf" ||  echo "No additional profiles found. Use -c option instead for edit" ;;
     n ) new_profile $OPTARG;;
     a ) set_subarches;;
     : ) echo "Option requres an secord argument -- $OPTARG" && exit 1;;
