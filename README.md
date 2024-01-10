@@ -1,4 +1,4 @@
-# linux-ck-autobuild service
+# linux-ck-autobuild
 
 ## About
 > Linux-ck is a package that allows users to run a kernel and headers setup patched with Con Kolivas' -ck patchset, including hrtimer patches and the 1000 Hz tick rate and others cpu optimizations correspond to -march= settings: generic-v2,3,4 or specific subarch. Also you can choose Clang compiler rather that GCC.
@@ -15,6 +15,7 @@ https://wiki.archlinux.org/title/Unofficial_user_repositories/Repo-ck
 * Option to add build kernels to your local repo with archive of obsolete packages
 * Frofiles support
 * Ability to build needed commit (version) of linux-ck PKGBUILD (e.g. for compile old versions)
+* Automatically adds and applies *.patch files before the build process.
 
 ## Installing
 
