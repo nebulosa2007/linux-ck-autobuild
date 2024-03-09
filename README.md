@@ -1,5 +1,4 @@
 # linux-ck-autobuild
-
 ## About
 > Linux-ck is a package that allows users to run a kernel and headers setup patched with Con Kolivas' -ck patchset, including hrtimer patches and the 1000 Hz tick rate and others cpu optimizations correspond to -march= settings: generic-v2,3,4 or specific subarch. Also you can choose Clang compiler rather that GCC.
 
@@ -19,8 +18,8 @@ https://wiki.archlinux.org/title/Unofficial_user_repositories/Repo-ck
 
 ## Installing
 
-This package can be installed from the AUR:
-[linux-ck-autobuild](https://aur.archlinux.org/packages/linux-ck-autobuild)
+This package can be installed from the [![linux-ck-autobuild](https://repology.org/badge/version-for-repo/aur/linux-ck-autobuild.svg?header=AUR:%20linux-ck-autobuild)](https://aur.archlinux.org/packages/linux-ck-autobuild)
+
 
 ## Usage
 First you'll need to setup the configuration file, simply by running ``linux-ck-autobuild`` from a command line. The script will notify you about configuration missing and will copy the default config to your home folder. Directions are given in the configuration file.
