@@ -18,7 +18,7 @@ https://wiki.archlinux.org/title/Unofficial_user_repositories/Repo-ck
 
 ## Installing
 
-This package can be installed from the [![linux-ck-autobuild](https://repology.org/badge/version-for-repo/aur/linux-ck-autobuild.svg?header=AUR:%20linux-ck-autobuild)](https://aur.archlinux.org/packages/linux-ck-autobuild)
+This package can be installed from the [![AUR package](https://repology.org/badge/version-for-repo/aur/linux-ck-autobuild.svg)](https://aur.archlinux.org/packages/linux-ck-autobuild)
 
 
 ## Usage
