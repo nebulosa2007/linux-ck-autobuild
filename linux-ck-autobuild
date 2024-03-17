@@ -258,17 +258,17 @@ function update_repo {
         mkdir -p "$LOCAL_REPO/archive"
         moved="n"
         if [ "$1" == "cleanup" ];then
-            obsolete=$(find "$LOCAL_REPO" -name '*.pkg.tar.zst' | grep -v -f "$BUILD_DIR/.last_build")
-            mv "$obsolete" -t "$LOCAL_REPO/archive" 2>/dev/null && rm -f "$LOCAL_REPO/$LOCAL_REPO_NAME".{db,files}* && moved="y"
-            renew=$(find "$LOCAL_REPO/archive" -name '*.pkg.tar.zst' | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'"$LOCAL_REPO"'/archive/&-x86_64.pkg.tar.zst|g')
-            mv "$renew" -t "$LOCAL_REPO" 2>/dev/null && moved="y"
+            mapfile -t obsolete < <(find "$LOCAL_REPO" -maxdepth 1 -name '*.pkg.tar.zst' | grep -v -f "$BUILD_DIR/.last_build")
+            mv "${obsolete[@]}" -t "$LOCAL_REPO/archive" 2>/dev/null && rm -f "$LOCAL_REPO/$LOCAL_REPO_NAME".{db,files}* && moved="y"
+            mapfile -t renew < <(find "$LOCAL_REPO/archive" -maxdepth 1 -name '*.pkg.tar.zst' | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'"$LOCAL_REPO"'/archive/&-x86_64.pkg.tar.zst|g')
+            mv "${renew[@]}" -t "$LOCAL_REPO" 2>/dev/null && moved="y"
             cd "$BUILD_DIR/linux-ck" && git clean -dfx
         else
             mv "$BUILD_DIR/linux-ck"/*.pkg.tar.zst "$LOCAL_REPO" 2>/dev/null && moved="y"
         fi
         if [ "$moved" == "y" ]; then
-            last_versions=$(find "$LOCAL_REPO" -name '*.pkg.tar.zst' | sort -Vr | sort -ut. -k1,1)
-            old_versions=$(find "$LOCAL_REPO" -name '*.pkg.tar.zst' | grep -v "$last_versions")
+            last_versions=$(/usr/bin/ls -1 "$LOCAL_REPO"/*.pkg.tar.zst | sort -Vr | sort -ut. -k1,1)
+            old_versions=$(/usr/bin/ls -1  "$LOCAL_REPO"/*.pkg.tar.zst | grep -v "$last_versions")
             repo-add -q -n --nocolor "$LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz" "$last_versions" && mv "$old_versions" -t "$LOCAL_REPO/archive" 2>/dev/null
         fi
     fi
@@ -378,7 +378,7 @@ function main_program {
             if [ -n "$clangbuild" ]; then
                 sed -i '/_clangbuild=/c\_clangbuild='"$clangbuild"'' "$pkgbuild"
             fi
-            for patch in $( find "$BUILD_DIR" -name '*.patch' 2>/dev/null | sort -r ) ; do
+            for patch in $( find "$BUILD_DIR" -maxdepth 1 -name '*.patch' 2>/dev/null | sort -r ) ; do
                 sed -i '/  diff -u ..\/config .config || :/c\  diff -u ..\/config .config || :\n\n  patch -Np1 < "..\/..\/..\/'"$(basename "$patch")"'"' "$pkgbuild"
             done
 
@@ -423,7 +423,7 @@ getopts ":hcln:a" option
 case "$option" in
     h ) print_help;;
     c ) edit_config "$2";;
-    l ) find "$HOME/.config/$program_name" ! -name "$program_name.conf" -name "*.conf" ||  echo "No additional profiles found. Use -c option instead for edit" ;;
+    l ) find "$HOME/.config/$program_name" -maxdepth 1 ! -name "$program_name.conf" -name "*.conf" ||  echo "No additional profiles found. Use -c option instead for edit" ;;
     n ) new_profile "$OPTARG";;
     a ) set_subarches;;
     : ) echo "Option requres an secord argument -- $OPTARG" && exit 1;;
