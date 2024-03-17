@@ -10,7 +10,7 @@ program_name=${0##*/}
 
 
 function subarches {
-    cat << EOF > $1
+    cat << EOF > "$1"
 arch_1="k8"              #   1. AMD Opteron/Athlon64/Hammer/K8
 arch_2="k8sse3"          #   2. AMD Opteron/Athlon64/Hammer/K8 with SSE3
 arch_3="k10"             #   3. AMD 61xx/7x50/PhenomX3/X4/II/K10
@@ -60,7 +60,7 @@ EOF
 
 
 function default_conf {
-    cat << EOF > $1
+    cat << EOF > "$1"
 # Since kernel version 5.7.1.arch-1, which contain BTF option, compilation of the kernel
 # requires about 8 Gb of RAM + SWAP. And 25 Gb of disk space (or less if you use modprobed-db)
 # You have been warned!
@@ -143,8 +143,8 @@ CONFIG_DIR="/home/$USER/.config/$program_name"
 
 
 function print_help {
-    underline=`tput smul`
-    nounderline=`tput rmul`
+    underline=$(tput smul)
+    nounderline=$(tput rmul)
     echo "A tool to automatically build linux-ck kernels.
 
 ${underline}Usage:${nounderline} $program_name [OPTIONS] [profile_name]
@@ -167,9 +167,9 @@ Version $VERSION
 
 
 function edit_config {
-    if [ -f /usr/bin/$EDITOR ]; then
+    if [ -f /usr/bin/"$EDITOR" ]; then
         if [ -n "$1" ]; then
-            p=$(basename $1 .conf)
+            p=$(basename "$1" .conf)
             [ -r "$CONFIG_DIR/$p.conf" ] && $EDITOR "$CONFIG_DIR/$p.conf" || echo "No profile $p found"
         else
             $EDITOR "$CONFIG_DIR/$program_name.conf"
@@ -184,7 +184,7 @@ function edit_config {
 
 function new_profile {
     skip_parameters="(EDITOR|BUILD_DIR|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|REPO_CK_MIRROR|REPO_CK_NAME|USE_LOCAL_REPO|LOCAL_REPO|LOCAL_REPO_NAME|CONFIG_VERSION|PROFILES)"
-    p=$(basename $1 .conf)
+    p=$(basename "$1" .conf)
     if [ ! -r "$CONFIG_DIR/$p.conf" ]; then
         grep -Ev "^(#|$)" "$CONFIG_DIR/$program_name.conf" | grep -Ev $skip_parameters > "$CONFIG_DIR/$p.conf"
         $EDITOR "$CONFIG_DIR/$p.conf"
@@ -198,9 +198,9 @@ function new_profile {
 function set_subarches {
     message="Default is Generic-x86-64 - number 39. See: https://wiki.archlinux.org/index.php/Repo-ck for more info"
     if [ -x "$(command -v fzf)" ]; then
-        archs=$(cat "$CONFIG_DIR/subarches" | cut -d "#" -f2 | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | sed 's/  / /g'| tr -d '\n' )
+        archs=$(cut -d "#" -f2 < "$CONFIG_DIR/subarches" | fzf --sync --bind 'start:pos(39)+select+pos(1)' -m --reverse --preview "echo 'Use Tab to select desired archs'; echo $message" --preview-window=wrap | cut -d'.' -f1 | sed 's/  / /g'| tr -d '\n' )
     else
-        cat "$CONFIG_DIR/subarches" | cut -d "#" -f2
+        cut -d "#" -f2 < "$CONFIG_DIR/subarches"
         echo -e "\n$message\n"
         archs=" 39"
         read -rp "Write numbers of desired arches above, space separated:" -e -i "${archs}" archs
@@ -219,7 +219,7 @@ function update_config {
     default_conf "$CONFIG_DIR/$program_name.conf"
 
     for item in ${!UPDATE[*]}; do
-        sed -i '/^#/!s|'${UPDATE[$item]}'=".*"|'${UPDATE[$item]}'="'"${!UPDATE[$item]}"'"|g' "$CONFIG_DIR/$program_name.conf"
+        sed -i '/^#/!s|'"${UPDATE[$item]}"'=".*"|'"${UPDATE[$item]}"'="'"${!UPDATE[$item]}"'"|g' "$CONFIG_DIR/$program_name.conf"
     done
 
     sed -i '/^#/!s|subarch=(.*)|subarch=( '"${subarch[*]}"' )|g'    "$CONFIG_DIR/$program_name.conf"
@@ -231,6 +231,7 @@ function update_config {
 
 function load_config {
     if [ -r "$CONFIG_DIR/$program_name.conf" ]; then
+        # shellcheck source=/dev/null
         .   "$CONFIG_DIR/$program_name.conf"
         if [ "$CONFIG_VERSION" == "$VERSION" ]; then
             if [[ -z $EDITOR || -z $BUILD_DIR || -z $subarch ]]; then
@@ -257,18 +258,18 @@ function update_repo {
         mkdir -p "$LOCAL_REPO/archive"
         moved="n"
         if [ "$1" == "cleanup" ];then
-            obsolete=$(ls -1 "$LOCAL_REPO"/*.pkg.tar.zst | grep -v -f "$BUILD_DIR/.last_build")
-            mv $obsolete -t "$LOCAL_REPO/archive" 2>/dev/null && rm -f "$LOCAL_REPO/$LOCAL_REPO_NAME".{db,files}* && moved="y"
-            renew=$(ls -1 "$LOCAL_REPO/archive"/*.pkg.tar.zst | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'$LOCAL_REPO'/archive/&-x86_64.pkg.tar.zst|g')
-            mv $renew -t "$LOCAL_REPO" 2>/dev/null && moved="y"
+            obsolete=$(find "$LOCAL_REPO" -name '*.pkg.tar.zst' | grep -v -f "$BUILD_DIR/.last_build")
+            mv "$obsolete" -t "$LOCAL_REPO/archive" 2>/dev/null && rm -f "$LOCAL_REPO/$LOCAL_REPO_NAME".{db,files}* && moved="y"
+            renew=$(find "$LOCAL_REPO/archive" -name '*.pkg.tar.zst' | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'"$LOCAL_REPO"'/archive/&-x86_64.pkg.tar.zst|g')
+            mv "$renew" -t "$LOCAL_REPO" 2>/dev/null && moved="y"
             cd "$BUILD_DIR/linux-ck" && git clean -dfx
         else
             mv "$BUILD_DIR/linux-ck"/*.pkg.tar.zst "$LOCAL_REPO" 2>/dev/null && moved="y"
         fi
         if [ "$moved" == "y" ]; then
-            last_versions=$(ls -1 "$LOCAL_REPO"/*.pkg.tar.zst | sort -Vr | sort -ut. -k1,1)
-            old_versions=$(ls -1  "$LOCAL_REPO"/*.pkg.tar.zst | grep -v "$last_versions")
-            repo-add -q -n --nocolor "$LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz" $last_versions && mv $old_versions -t "$LOCAL_REPO/archive" 2>/dev/null
+            last_versions=$(find "$LOCAL_REPO" -name '*.pkg.tar.zst' | sort -Vr | sort -ut. -k1,1)
+            old_versions=$(find "$LOCAL_REPO" -name '*.pkg.tar.zst' | grep -v "$last_versions")
+            repo-add -q -n --nocolor "$LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz" "$last_versions" && mv "$old_versions" -t "$LOCAL_REPO/archive" 2>/dev/null
         fi
     fi
 }
@@ -277,9 +278,9 @@ function update_repo {
 function check_build_dir {
     if [ -r "$BUILD_DIR/linux-ck/PKGBUILD" ]; then
         git -C "$BUILD_DIR/linux-ck" reset --hard --quiet
-        cd "$BUILD_DIR/linux-ck"
+        cd "$BUILD_DIR/linux-ck" || exit 1
         if [ -n "$NEEDED_VERSION" ]; then
-            git -c advice.detachedHead=false checkout $(echo ${NEEDED_VERSION%:*})
+            git -c advice.detachedHead=false checkout "${NEEDED_VERSION%:*}"
         else
             git checkout --quiet master
             git -C "$BUILD_DIR/linux-ck" pull --quiet
@@ -293,7 +294,7 @@ function check_build_dir {
         sudo pacman-key -r 5EE46C4C --keyserver "keyserver.ubuntu.com" && sudo pacman-key --lsign-key 5EE46C4C # Graysky
         gpg --locate-keys torvalds@kernel.org gregkh@kernel.org # Linus Torvalds and Greg Kroah-Hartman
         echo "Install dependencies"
-        sudo pacman -Syu --needed bc cpio gettext libelf pahole python perl tar xz $([ -n "$clangbuild" ] && echo "clang llvm lld")
+        sudo pacman -Syu --needed bc cpio gettext libelf pahole python perl tar xz "$([[ -n $clangbuild ]] && echo 'clang llvm lld')"
     fi
 }
 
@@ -322,11 +323,11 @@ function check_repo_ck {
             rm -fr "/tmp/linux-ck-hashes"
 
             echo "mirroring from $REPO_CK_MIRROR"
-            cd "$BUILD_DIR/linux-ck"
+            cd "$BUILD_DIR/linux-ck" || exit 1
             for package in "$package_kernel" "$package_headers"; do
                 curl -C - "$REPO_CK_MIRROR/$package" -o "$package.remote"
-                sha256sum_check=$(echo $sha256sums | grep -Po '(?<='$package' -- )([^ ]*) \K(\S+)'| grep -Po '(?<=desc-)(\S+)')
-                [ `echo "$sha256sum_check $package.remote" | sha256sum --check - --status` ] || mv "$package{.remote,}"
+                sha256sum_check=$(echo "$sha256sums" | grep -Po '(?<='"$package"' -- )([^ ]*) \K(\S+)'| grep -Po '(?<=desc-)(\S+)')
+                [ "$(echo "$sha256sum_check $package.remote" | sha256sum --check - --status)" ] || mv "$package.remote" "$package"
             done
         fi
     fi
@@ -340,9 +341,14 @@ function pp {
 
 function main_program {
     check_build_dir
+    # shellcheck source=/dev/null
     . "$CONFIG_DIR/subarches"
 
-    latest_version=$([ -n "$NEEDED_VERSION" ] && echo ${NEEDED_VERSION#*:} || curl -s "https://aur.archlinux.org/packages/linux-ck" | grep -Po '(?<=linux-ck ).*(?=</h2)')
+    if [ -n "$NEEDED_VERSION" ]; then
+        latest_version=${NEEDED_VERSION#*:}
+    else
+        latest_version=$(curl -s "https://aur.archlinux.org/packages/linux-ck" | grep -Po '(?<=linux-ck ).*(?=</h2)')
+    fi
     [ "$latest_version" == "" ] && { echo "Error: latest version not defined from AUR. Check settings or connection!"; exit 1; }
 
     for element in "${subarch[@]}"; do
@@ -361,44 +367,45 @@ function main_program {
 
             # PKGBUILD file
             if [ -z "$localmodcfg" ]; then
-                sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'' "$pkgbuild"
+                sed -i '/pkgbase=/c\pkgbase=linux-ck'"$subarch_name"'' "$pkgbuild"
                 AUTONO=""
             else
-                sed -i '/pkgbase=/c\pkgbase=linux-ck'$subarch_name'-modprobed' "$pkgbuild"
-                sed -i '/_localmodcfg=/c\_localmodcfg='$localmodcfg'' "$pkgbuild"
-                sed -i 's|/modprobed.db|/'$program_name'/'$DBFILE'|g' "$pkgbuild"
+                sed -i '/pkgbase=/c\pkgbase=linux-ck'"$subarch_name"'-modprobed' "$pkgbuild"
+                sed -i '/_localmodcfg=/c\_localmodcfg='"$localmodcfg"'' "$pkgbuild"
+                sed -i 's|/modprobed.db|/'"$program_name"'/'"$DBFILE"'|g' "$pkgbuild"
             fi
-            sed -i '/_subarch=/c\_subarch='$element'' "$pkgbuild"
+            sed -i '/_subarch=/c\_subarch='"$element"'' "$pkgbuild"
             if [ -n "$clangbuild" ]; then
-                sed -i '/_clangbuild=/c\_clangbuild='$clangbuild'' "$pkgbuild"
+                sed -i '/_clangbuild=/c\_clangbuild='"$clangbuild"'' "$pkgbuild"
             fi
-            for patch in $( ls -1 "$BUILD_DIR"/*.patch 2>/dev/null | sort -r ) ; do
-                sed -i '/  diff -u ..\/config .config || :/c\  diff -u ..\/config .config || :\n\n  patch -Np1 < "..\/..\/..\/'$(basename $patch)'"' "$pkgbuild"
+            for patch in $( find "$BUILD_DIR" -name '*.patch' 2>/dev/null | sort -r ) ; do
+                sed -i '/  diff -u ..\/config .config || :/c\  diff -u ..\/config .config || :\n\n  patch -Np1 < "..\/..\/..\/'"$(basename "$patch")"'"' "$pkgbuild"
             done
 
             # config file
             if [ -n "$NOMODULES" ]; then
-                for module in "$NOMODULES" ; do
-                    sed -i 's/'$module'=m/#'$module' is not set/' "$config"
+                for module in $NOMODULES ; do
+                    sed -i 's/'"$module"'=m/#'"$module"' is not set/' "$config"
                 done
                 editconfig="y"
             fi
-            if [ -n "editconfig" ]; then
+            if [ -n "$editconfig" ]; then
                 oldsha256sum=$(grep -A2 'sha256sums' "$pkgbuild" | tail -1 | cut -d"'" -f2)
                 newsha256sum=$(sha256sum "$config" | cut -d" " -f1)
-                sed -i 's/'$oldsha256sum'/'$newsha256sum'/' "$pkgbuild"
+                sed -i 's/'"$oldsha256sum"'/'"$newsha256sum"'/' "$pkgbuild"
             fi
 
             # Compile kernel
             echo "$(date +"%Y-%m-%d_%H:%M") Starting kernel build $kernel_version"
-            echo "Compile parameters are:
-  Modprobed-db file"$(pp ${localmodcfg} ": ${DBFILE}" ": No")"
-  Using Clang"$(pp ${clangbuild} ": Yes" ": No")"
-  Modules that are not compiled"$(pp ${NOMODULES} ": ${NOMODULES}" ": None")
-            ( cd "$BUILD_DIR/linux-ck" && ( echo $AUTONO | tr ' ' '\n' | makepkg -mC )) > "$logfile"
+            echo "Compile parameters are:"
+echo "  Modprobed-db file$(pp "$localmodcfg" ": $DBFILE" ": No")"
+echo "  Using Clang$(pp "$clangbuild" ": Yes" ": No")"
+echo "  Modules that are not compiled$(pp "$NOMODULES" ": $NOMODULES" ": None")"
+            ( cd "$BUILD_DIR/linux-ck" && ( echo "$AUTONO" | tr ' ' '\n' | makepkg -mC )) > "$logfile"
+            status=$?
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $kernel_version"
-            buildstatus=$(echo -n $?": "; head -1 "$logfile"; tail -1 "$logfile" | sed 's/==>//g')
-            eval $USER_COMMAND1
+            _buildstatus=$(echo -n "$status: "; head -1 "$logfile"; tail -1 "$logfile" | sed 's/==>//g')
+            eval "$USER_COMMAND1"
             echo
         else
             echo "$(date +"%Y-%m-%d_%H:%M") Kernel $kernel_version $found" > "$logfile"
@@ -415,16 +422,17 @@ getopts ":hcln:a" option
 
 case "$option" in
     h ) print_help;;
-    c ) edit_config $2;;
-    l ) ls "$HOME/.config/$program_name"/*.conf | grep -v "$program_name.conf" ||  echo "No additional profiles found. Use -c option instead for edit" ;;
-    n ) new_profile $OPTARG;;
+    c ) edit_config "$2";;
+    l ) find "$HOME/.config/$program_name" ! -name "$program_name.conf" -name "*.conf" ||  echo "No additional profiles found. Use -c option instead for edit" ;;
+    n ) new_profile "$OPTARG";;
     a ) set_subarches;;
     : ) echo "Option requres an secord argument -- $OPTARG" && exit 1;;
     ? ) [ -n "$OPTARG" ] && { echo "Option not found, try -h or --help" && exit 1; }
-        : > $BUILD_DIR/.last_build
-        for profile in ${PROFILES[@]}; do
+        : > "$BUILD_DIR"/.last_build
+        for profile in "${PROFILES[@]}"; do
             load_config
             if [ -r "$CONFIG_DIR/$profile.conf" ]; then
+                #shellcheck source=/dev/null
                 . "$CONFIG_DIR/$profile.conf"
             else
                 echo "Profile $profile not found. Skipping"
@@ -432,9 +440,9 @@ case "$option" in
             fi
             echo -e "\n\nProfile loaded: $profile.conf"
             main_program
-            eval $USER_COMMAND2
+            eval "$USER_COMMAND2"
         done
         update_repo "cleanup"
-        eval $USER_COMMAND3
+        eval "$USER_COMMAND3"
         ;;
 esac
