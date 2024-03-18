@@ -1,9 +1,10 @@
 #!/bin/bash
 # Author: Jochum D, jooch (at) gmx (dot) com
-# Maintainer: Nebulosa
-# License: GPL3
-# About: This script will automatically build specified ck kernels on a headless machines.
-# Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details.
+# Contributor: Nebulosa
+# License: GPL 3.0
+# About: This script will automatically build specified -ck linux kernels
+# on a headless machines.
+# Usage: Run 'linux-ck-autobuild' or 'linux-ck-autobuild -h' for more details
 
 
 program_name=${0##*/}
@@ -53,32 +54,36 @@ arch_39=""               #  39. Generic-x86-64    (DEFAULT)
 arch_40="generic-v2"     #  40. Generic-x86-64-v2
 arch_41="generic-v3"     #  41. Generic-x86-64-v3
 arch_42="generic-v4"     #  42. Generic-x86-64-v4
-arch_43="native_intel"   #  43. Intel-Native optimizations autodetected by the compiler
-arch_44="native_amd"     #  44. AMD-Native optimizations autodetected by the compiler
+arch_43="native_intel"   #  43. Intel-Native optimizations detected by the compiler
+arch_44="native_amd"     #  44. AMD-Native optimizations detected by the compiler
 EOF
 }
 
 
 function default_conf {
     cat << EOF > "$1"
-# Since kernel version 5.7.1.arch-1, which contain BTF option, compilation of the kernel
-# requires about 8 Gb of RAM + SWAP. And 25 Gb of disk space (or less if you use modprobed-db)
+# Since kernel version 5.7.1.arch-1, which contain BTF option, compilation of
+# the kernel requires about 8 Gb of RAM + SWAP. And 25 Gb of disk space
+# (or less if you use modprobed-db)
 # You have been warned!
 
 # Preferred editor for editing settings
 EDITOR="need_config"
 
-# For selecting another version of kernel. Format is: 'git_commit:version', e.g. 'bb1d3c5:6.6-2'
+# For selecting another version of kernel. Format is: 'git_commit:version',
+# e.g. 'bb1d3c5:6.6-2'
 # Use 'git log --oneline' in BUILD_DIR to list them
 NEEDED_VERSION=""
 
-# The base directory on this system where the directories to sync are located. Don't add a slash at the end!
+# The base directory on this system where the directories to sync are located.
+# Don't add a slash at the end!
 BUILD_DIR="/home/$USER/.local/share/linux-ck-autobuild"
 
 # List of modules does not need to be compiled, space separated
 NOMODULES=""
 
-# User commands to run after compiling kernels, example: 'echo "Autobuild done" | mail -s "Autobuild \$kernel_version done" mail@domain.tld'
+# User commands to run after compiling kernels, example:
+# 'echo "Autobuild done" | mail -s "Autobuild \$kernel_version done" i@mail.tld'
 # Only after compilation the kernel with selected sub-architecture is complete
 USER_COMMAND1=""
 # After selected profile
@@ -86,26 +91,28 @@ USER_COMMAND2=""
 # At the end
 USER_COMMAND3=""
 
-# Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends which NEW module you want to compile
+# Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends which
+# NEW module you want to compile
 # Should be use with not empty 'localmodcfg' option only
 AUTONO="N N N N N"
 # db-file for modprobed
 DBFILE="linux-ck-autobuild.db"
 
-# Select a repo-ck mirror to use when seeking for prebuilt packages (only one can be enabled).
+# Select a repo-ck mirror to use when seeking for prebuilt packages (only one
+# can be enabled).
 REPO_CK_MIRROR="https://mirror.lesviallon.fr/repo-ck/os/x86_64"
 REPO_CK_NAME="repo-ck"
 # Another variant, repo from author
 #REPO_CK_MIRROR="http://repo-ck.com/x86_64"
 #REPO_CK_NAME="repo-ck"
 
-# If you have a local repository and wish to automatically add completed builds to it you can enable it by
-# setting USE_LOCAL_REPO to "y", leave empty to disable
+# If you have a local repository and wish to automatically add completed builds
+# to it you can enable it by setting USE_LOCAL_REPO to "y", leave empty to off
 USE_LOCAL_REPO=""
 # Location of your local repository and database. Don't add a slash at the end!
 # Hint: to add local repo in local pacman.conf:
 # [<LOCAL_REPO_NAME>]
-# SigLevel = Optional TrustAll
+# SigLevel = Never
 # Server = file:///<LOCAL_REPO>
 LOCAL_REPO="/home/$USER/.local/share/linux-ck-autobuild/local_repo"
 LOCAL_REPO_NAME="linux-ck"
@@ -116,15 +123,15 @@ REPOCTL_FOLDER=""
 # Location of your local repository and database. Don't add a slash at the end!
 # Hint: to add repoctl repo in pacman.conf:
 # [<REPOCTL_REPO_NAME>]
-# SigLevel = Optional TrustAll
+# SigLevel = Never
 # Server = file:///<REPOCTL_FOLDER>
 
-####################################################################################
+################################################################################
 ## -ck specific options
 
-# If you have the modprobe-db package installed and wish to use it, change to 'y' otherwise leave empty.
-# With the modprobe-db package only the modules that were listed by modprobe-db get build, significantly
-# reducing build times.
+# If you have the modprobe-db package installed and wish to use it, change to
+# 'y' otherwise leave empty. With the modprobe-db package only the modules that
+# were listed by modprobe-db get build, significantly reducing build times.
 # See for more info: https://wiki.archlinux.org/title/Modprobed-db
 localmodcfg=""
 
@@ -135,10 +142,11 @@ clangbuild=""
 # In case of multiple architectures separate them with a space: ( 39 40 41 )
 # Or use option -a for select from subarches list, see --help.
 subarch=( 39 )
-####################################################################################
+################################################################################
 
 # Profiles
-# List profiles files one by one, space separated. Default is 'linux-ck-autobuild'
+# List profiles files one by one, space separated.
+# Default is 'linux-ck-autobuild'
 PROFILES=( $program_name )
 
 CONFIG_VERSION=0.8.0
@@ -306,7 +314,8 @@ function check_build_dir {
         git -C "$BUILD_DIR" clone "https://aur.archlinux.org/linux-ck.git" --quiet
         echo "Adding pgp keys"
         sudo pacman-key -r 5EE46C4C --keyserver "keyserver.ubuntu.com" && sudo pacman-key --lsign-key 5EE46C4C # Graysky
-        gpg --locate-keys torvalds@kernel.org gregkh@kernel.org # Linus Torvalds and Greg Kroah-Hartman
+        # Linus Torvalds and Greg Kroah-Hartman
+        gpg --locate-keys torvalds@kernel.org gregkh@kernel.org
         echo "Install dependencies"
         sudo pacman -Syu --needed bc cpio gettext libelf pahole python perl tar xz "$([[ -n $clangbuild ]] && echo 'clang llvm lld')"
     fi
