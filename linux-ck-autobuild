@@ -110,6 +110,15 @@ USE_LOCAL_REPO=""
 LOCAL_REPO="/home/$USER/.local/share/linux-ck-autobuild/local_repo"
 LOCAL_REPO_NAME="linux-ck"
 
+# Another variant is using repo tool: https://github.com/cassava/repoctl
+USE_REPOCTL=""
+REPOCTL_FOLDER=""
+# Location of your local repository and database. Don't add a slash at the end!
+# Hint: to add repoctl repo in pacman.conf:
+# [<REPOCTL_REPO_NAME>]
+# SigLevel = Optional TrustAll
+# Server = file:///<REPOCTL_FOLDER>
+
 ####################################################################################
 ## -ck specific options
 
@@ -132,12 +141,12 @@ subarch=( 39 )
 # List profiles files one by one, space separated. Default is 'linux-ck-autobuild'
 PROFILES=( $program_name )
 
-CONFIG_VERSION=0.7.5
+CONFIG_VERSION=0.8.0
 EOF
 }
 
 
-VERSION=0.7.5
+VERSION=0.8.0
 
 CONFIG_DIR="/home/$USER/.config/$program_name"
 
@@ -183,7 +192,7 @@ function edit_config {
 
 
 function new_profile {
-    skip_parameters="(EDITOR|BUILD_DIR|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|REPO_CK_MIRROR|REPO_CK_NAME|USE_LOCAL_REPO|LOCAL_REPO|LOCAL_REPO_NAME|CONFIG_VERSION|PROFILES)"
+    skip_parameters="(EDITOR|BUILD_DIR|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|REPO_CK_MIRROR|REPO_CK_NAME|USE_LOCAL_REPO|LOCAL_REPO|LOCAL_REPO_NAME|USE_REPOCTL|REPOCTL_FOLDER|CONFIG_VERSION|PROFILES)"
     p=$(basename "$1" .conf)
     if [ ! -r "$CONFIG_DIR/$p.conf" ]; then
         grep -Ev "^(#|$)" "$CONFIG_DIR/$program_name.conf" | grep -Ev $skip_parameters > "$CONFIG_DIR/$p.conf"
@@ -213,7 +222,7 @@ function set_subarches {
 
 
 function update_config {
-    UPDATE=( EDITOR NEEDED_VERSION BUILD_DIR USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 AUTONO DBFILE REPO_CK_MIRROR REPO_CK_NAME USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME localmodcfg clangbuild )
+    UPDATE=( EDITOR NEEDED_VERSION BUILD_DIR USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 AUTONO DBFILE REPO_CK_MIRROR REPO_CK_NAME USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_REPOCTL REPOCTL_FOLDER localmodcfg clangbuild )
 
     mv "$CONFIG_DIR/$program_name.conf" "$CONFIG_DIR/$program_name.old"
     default_conf "$CONFIG_DIR/$program_name.conf"
@@ -257,20 +266,25 @@ function update_repo {
         mkdir -p "$LOCAL_REPO"
         mkdir -p "$LOCAL_REPO/archive"
         moved="n"
-        if [ "$1" == "cleanup" ];then
+        if [ "$1" == "cleanup" ]; then
             mapfile -t obsolete < <(find "$LOCAL_REPO" -maxdepth 1 -name '*.pkg.tar.zst' | grep -v -f "$BUILD_DIR/.last_build")
             mv "${obsolete[@]}" -t "$LOCAL_REPO/archive" 2>/dev/null && rm -f "$LOCAL_REPO/$LOCAL_REPO_NAME".{db,files}* && moved="y"
             mapfile -t renew < <(find "$LOCAL_REPO/archive" -maxdepth 1 -name '*.pkg.tar.zst' | grep -o -f "$BUILD_DIR/.last_build"| sed 's|^.*$|'"$LOCAL_REPO"'/archive/&-x86_64.pkg.tar.zst|g')
             mv "${renew[@]}" -t "$LOCAL_REPO" 2>/dev/null && moved="y"
-            cd "$BUILD_DIR/linux-ck" && git clean -dfx
         else
-            mv "$BUILD_DIR/linux-ck"/*.pkg.tar.zst "$LOCAL_REPO" 2>/dev/null && moved="y"
+            cp "$BUILD_DIR/linux-ck"/*.pkg.tar.zst -t "$LOCAL_REPO" 2>/dev/null && moved="y"
         fi
         if [ "$moved" == "y" ]; then
             last_versions=$(/usr/bin/ls -1 "$LOCAL_REPO"/*.pkg.tar.zst | sort -Vr | sort -ut. -k1,1)
             old_versions=$(/usr/bin/ls -1  "$LOCAL_REPO"/*.pkg.tar.zst | grep -v "$last_versions")
             repo-add -q -n --nocolor "$LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz" "$last_versions" && mv "$old_versions" -t "$LOCAL_REPO/archive" 2>/dev/null
         fi
+    fi
+    if [ -n "$USE_REPOCTL" ]; then
+       find "$BUILD_DIR/linux-ck" -maxdepth 1 -name '*.pkg.tar.zst' -exec repoctl add {} \;
+    fi
+    if [ "$1" == "cleanup" ]; then
+        cd "$BUILD_DIR/linux-ck" && git clean -dfx
     fi
 }
 
@@ -302,11 +316,17 @@ function check_build_dir {
 function check_repo_ck {
     package_kernel=linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-$latest_version-x86_64.pkg.tar.zst
     package_headers=linux-ck$subarch_name$([ -n "$localmodcfg" ] && echo "-modprobed")-headers-$latest_version-x86_64.pkg.tar.zst
-    if [ -r "$LOCAL_REPO/archive/$package_kernel" ] ; then
+    if [ -r "$LOCAL_REPO/archive/$package_kernel" ]; then
        echo "found in archive local repo"
        return
-    elif [ -r "$LOCAL_REPO/$package_kernel" ] ; then
+    elif [ -r "$LOCAL_REPO/$package_kernel" ]; then
        echo "found in local repo"
+       return
+    elif [ -r "$REPOCTL_FOLDER/archive/$package_kernel" ]; then
+       echo "found in archive repoctl folder"
+       return
+    elif [ -r "$REPOCTL_FOLDER/$package_kernel" ]; then
+       echo "found in repoctl folder"
        return
     elif [ -r "$BUILD_DIR/linux-ck/$package_kernel" ]; then
        echo "found in build dir"
