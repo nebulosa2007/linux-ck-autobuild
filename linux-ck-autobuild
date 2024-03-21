@@ -149,12 +149,12 @@ subarch=( 39 )
 # Default is 'linux-ck-autobuild'
 PROFILES=( $program_name )
 
-CONFIG_VERSION=0.8.0
+CONFIG_VERSION=0.8.1
 EOF
 }
 
 
-VERSION=0.8.0
+VERSION=0.8.1
 
 CONFIG_DIR="/home/$USER/.config/$program_name"
 
@@ -317,7 +317,7 @@ function check_build_dir {
         # Linus Torvalds and Greg Kroah-Hartman
         gpg --locate-keys torvalds@kernel.org gregkh@kernel.org
         echo "Install dependencies"
-        sudo pacman -Syu --needed bc cpio gettext libelf pahole python perl tar xz "$([[ -n $clangbuild ]] && echo 'clang llvm lld')"
+        sudo pacman -Syu --needed base-devel bc cpio gettext libelf pahole python perl tar xz "$([[ -n $clangbuild ]] && echo 'clang llvm lld')"
     fi
 }
 
