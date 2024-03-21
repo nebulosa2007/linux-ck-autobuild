@@ -401,7 +401,10 @@ function main_program {
             else
                 sed -i '/pkgbase=/c\pkgbase=linux-ck'"$subarch_name"'-modprobed' "$pkgbuild"
                 sed -i '/_localmodcfg=/c\_localmodcfg='"$localmodcfg"'' "$pkgbuild"
-                sed -i 's|/modprobed.db|/'"$program_name"'/'"$DBFILE"'|g' "$pkgbuild"
+                sed -i "s|\$HOME/.config/modprobed.db|$DBFILE|g" "$pkgbuild"
+                sed -i "s|  config |  config $DBFILE|" "$pkgbuild"
+                sed -i "s|'SKIP'|'SKIP' 'SKIP'|" "$pkgbuild"
+                cp "$HOME"/.config/"$program_name"/"$DBFILE" "$DBFILE"
             fi
             sed -i '/_subarch=/c\_subarch='"$element"'' "$pkgbuild"
             if [ -n "$clangbuild" ]; then
