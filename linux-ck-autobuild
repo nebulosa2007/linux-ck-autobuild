@@ -285,7 +285,7 @@ function update_repo {
         if [ "$moved" == "y" ]; then
             last_versions=$(/usr/bin/ls -1 "$LOCAL_REPO"/*.pkg.tar.zst | sort -Vr | sort -ut. -k1,1)
             old_versions=$(/usr/bin/ls -1  "$LOCAL_REPO"/*.pkg.tar.zst | grep -v "$last_versions")
-            repo-add -q -n --nocolor "$LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz" "$last_versions" && mv "$old_versions" -t "$LOCAL_REPO/archive" 2>/dev/null
+            repo-add -q -n --nocolor "$LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz" $(echo "$last_versions") && mv "$old_versions" -t "$LOCAL_REPO/archive" 2>/dev/null
         fi
     fi
     if [ -n "$USE_REPOCTL" ]; then
