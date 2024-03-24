@@ -62,6 +62,8 @@ EOF
 
 function default_conf {
     cat << EOF > "$1"
+#!/bin/sh
+
 # Since kernel version 5.7.1.arch-1, which contain BTF option, compilation of
 # the kernel requires about 8 Gb of RAM + SWAP. And 25 Gb of disk space
 # (or less if you use modprobed-db)
