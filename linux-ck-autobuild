@@ -93,10 +93,10 @@ USER_COMMAND2=""
 # At the end
 USER_COMMAND3=""
 
-# Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', depends which
-# NEW module you want to compile
+# Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', space separted,
+# depends which NEW module you want to compile. E.g. 'N N N N N'
 # Should be use with not empty 'localmodcfg' option only
-AUTONO="N N N N N"
+AUTONO=""
 # db-file for modprobed
 DBFILE="linux-ck-autobuild.db"
 
@@ -399,7 +399,6 @@ function main_program {
             # PKGBUILD file
             if [ -z "$localmodcfg" ]; then
                 sed -i '/pkgbase=/c\pkgbase=linux-ck'"$subarch_name"'' "$pkgbuild"
-                AUTONO=""
             else
                 sed -i '/pkgbase=/c\pkgbase=linux-ck'"$subarch_name"'-modprobed' "$pkgbuild"
                 sed -i '/_localmodcfg=/c\_localmodcfg='"$localmodcfg"'' "$pkgbuild"
