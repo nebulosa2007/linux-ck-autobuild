@@ -93,13 +93,6 @@ USER_COMMAND2=""
 # At the end
 USER_COMMAND3=""
 
-# Automatic answer to (NEW) kernel modules. Can be 'Y' 'M' 'N', space separted,
-# depends which NEW module you want to compile. E.g. 'N N N N N'
-# Should be use with not empty 'localmodcfg' option only
-AUTONO=""
-# db-file for modprobed
-DBFILE="linux-ck-autobuild.db"
-
 # Select a repo-ck mirror to use when seeking for prebuilt packages (only one
 # can be enabled).
 REPO_CK_MIRROR="https://mirror.lesviallon.fr/repo-ck/os/x86_64"
@@ -128,6 +121,9 @@ REPOCTL_FOLDER=""
 # SigLevel = Never
 # Server = file:///<REPOCTL_FOLDER>
 
+# db-file for modprobed
+DBFILE="linux-ck-autobuild.db"
+
 ################################################################################
 ## -ck specific options
 
@@ -151,12 +147,12 @@ subarch=( 39 )
 # Default is 'linux-ck-autobuild'
 PROFILES=( $program_name )
 
-CONFIG_VERSION=0.8.1
+CONFIG_VERSION=0.8.2
 EOF
 }
 
 
-VERSION=0.8.1
+VERSION=0.8.2
 
 CONFIG_DIR="/home/$USER/.config/$program_name"
 
@@ -232,7 +228,7 @@ function set_subarches {
 
 
 function update_config {
-    UPDATE=( EDITOR NEEDED_VERSION BUILD_DIR USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 AUTONO DBFILE REPO_CK_MIRROR REPO_CK_NAME USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_REPOCTL REPOCTL_FOLDER localmodcfg clangbuild )
+    UPDATE=( EDITOR NEEDED_VERSION BUILD_DIR USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 REPO_CK_MIRROR REPO_CK_NAME USE_LOCAL_REPO LOCAL_REPO LOCAL_REPO_NAME USE_REPOCTL REPOCTL_FOLDER DBFILE localmodcfg clangbuild )
 
     mv "$CONFIG_DIR/$program_name.conf" "$CONFIG_DIR/$program_name.old"
     default_conf "$CONFIG_DIR/$program_name.conf"
@@ -291,6 +287,7 @@ function update_repo {
         if [ "$moved" == "y" ]; then
             last_versions=$(/usr/bin/ls -1 "$LOCAL_REPO"/*.pkg.tar.zst | sort -Vr | sort -ut. -k1,1)
             old_versions=$(/usr/bin/ls -1  "$LOCAL_REPO"/*.pkg.tar.zst | grep -v "$last_versions")
+            # shellcheck disable=SC2046,SC2116
             repo-add -q -n --nocolor "$LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz" $(echo "$last_versions") && mv "$old_versions" -t "$LOCAL_REPO/archive" 2>/dev/null
         fi
     fi
@@ -404,6 +401,8 @@ function main_program {
             else
                 sed -i '/pkgbase=/c\pkgbase=linux-ck'"$subarch_name"'-modprobed' "$pkgbuild"
                 sed -i '/_localmodcfg=/c\_localmodcfg='"$localmodcfg"'' "$pkgbuild"
+                # shellcheck disable=SC2016
+                sed -i '/        make LLVM=$_LLVM LLVM_IAS=$_LLVM LSMOD="$HOME\/.config\/modprobed.db" localmodconfig/c\        yes "N" | make LLVM=$_LLVM LLVM_IAS=$_LLVM LSMOD="$HOME\/.config\/modprobed.db" localmodconfig' "$pkgbuild"
                 sed -i "s|\$HOME/.config/modprobed.db|../$DBFILE|g" "$pkgbuild"
                 sed -i "s|  config |  $DBFILE config|" "$pkgbuild"
                 sed -i "s|'SKIP'|'SKIP' 'SKIP'|" "$pkgbuild"
@@ -436,7 +435,7 @@ function main_program {
 echo "  Modprobed-db file$(pp "$localmodcfg" ": $DBFILE" ": No")"
 echo "  Using Clang$(pp "$clangbuild" ": Yes" ": No")"
 echo "  Modules that are not compiled$(pp "$NOMODULES" ": $NOMODULES" ": None")"
-            ( cd "$BUILD_DIR/linux-ck" && ( echo "$AUTONO" | tr ' ' '\n' | makepkg -mC )) > "$logfile"
+            ( cd "$BUILD_DIR/linux-ck" && makepkg -mC ) > "$logfile"
             status=$?
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $kernel_version"
             _buildstatus=$(echo -n "$status: "; head -1 "$logfile"; tail -1 "$logfile" | sed 's/==>//g')
