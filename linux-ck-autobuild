@@ -272,6 +272,10 @@ function load_config {
 
 
 function update_repo {
+    if [ -n "$USE_REPOCTL" ]; then
+        find "$BUILD_DIR/linux-ck" -maxdepth 1 -name '*.pkg.tar.zst' -exec repoctl add {} \;
+        repoctl update
+    fi
     if [ -n "$USE_LOCAL_REPO" ]; then
         mkdir -p "$LOCAL_REPO"
         mkdir -p "$LOCAL_REPO/archive"
@@ -290,11 +294,10 @@ function update_repo {
             repo-add -q -n --nocolor "$LOCAL_REPO/$LOCAL_REPO_NAME.db.tar.xz" $(echo "$last_versions") && mv "$old_versions" -t "$LOCAL_REPO/archive" 2>/dev/null
         fi
     fi
-    if [ -n "$USE_REPOCTL" ]; then
-       find "$BUILD_DIR/linux-ck" -maxdepth 1 -name '*.pkg.tar.zst' -exec repoctl add {} \;
-    fi
     if [ "$1" == "cleanup" ]; then
         cd "$BUILD_DIR/linux-ck" && git clean -dfx
+    else
+        find "$BUILD_DIR/linux-ck" -maxdepth 1 -name '*.pkg.tar.zst' -delete
     fi
 }
 
