@@ -319,10 +319,9 @@ function check_build_dir {
         git -C "$BUILD_DIR" clone "https://aur.archlinux.org/linux-ck.git" --quiet
         echo "Adding pgp keys"
         sudo pacman-key -r 5EE46C4C --keyserver "keyserver.ubuntu.com" && sudo pacman-key --lsign-key 5EE46C4C # Graysky
-        # Linus Torvalds and Greg Kroah-Hartman
-        gpg --locate-keys torvalds@kernel.org gregkh@kernel.org
+        gpg --locate-keys torvalds@kernel.org gregkh@kernel.org # Linus Torvalds and Greg Kroah-Hartman
         echo "Install dependencies"
-        sudo pacman -Syu --needed base-devel bc cpio gettext libelf pahole python perl tar xz "$([[ -n $clangbuild ]] && echo 'clang llvm lld')"
+        sudo pacman -Syu --needed base-devel bc cpio gettext libelf pahole python perl tar xz clang llvm lld
     fi
 }
 
