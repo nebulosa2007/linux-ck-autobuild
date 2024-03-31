@@ -311,7 +311,6 @@ function check_build_dir {
         fi
     else
         echo "PKGBUILD not found at configured location, seting up..."
-        mkdir -p "$BUILD_DIR"
         echo "Cloning AUR package"
         git -C "$BUILD_DIR" clone "https://aur.archlinux.org/linux-ck.git" --quiet
         echo "Adding pgp keys"
@@ -406,7 +405,7 @@ function main_program {
                 sed -i "s|\$HOME/.config/modprobed.db|../$DBFILE|g" "$pkgbuild"
                 sed -i "s|  config |  $DBFILE config|" "$pkgbuild"
                 sed -i "s|'SKIP'|'SKIP' 'SKIP'|" "$pkgbuild"
-                cp "$HOME"/.config/"$program_name"/"$DBFILE" "$DBFILE"
+                cp "$CONFIG_DIR/$DBFILE" "$BUILD_DIR/linux-ck/$DBFILE"
             fi
             sed -i '/_subarch=/c\_subarch='"$element"'' "$pkgbuild"
             if [ -n "$clangbuild" ]; then
@@ -462,6 +461,7 @@ case "$option" in
     a ) set_subarches;;
     : ) echo "Option requres an secord argument -- $OPTARG" && exit 1;;
     ? ) [ -n "$OPTARG" ] && { echo "Option not found, try -h or --help" && exit 1; }
+        mkdir -p "$BUILD_DIR"
         : > "$BUILD_DIR"/.last_build
         for profile in "${PROFILES[@]}"; do
             load_config
