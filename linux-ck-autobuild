@@ -147,12 +147,12 @@ subarch=( 39 )
 # Default is 'linux-ck-autobuild'
 PROFILES=( $program_name )
 
-CONFIG_VERSION=0.8.2
+CONFIG_VERSION=0.8.3
 EOF
 }
 
 
-VERSION=0.8.2
+VERSION=0.8.3
 
 CONFIG_DIR="/home/$USER/.config/$program_name"
 
@@ -160,9 +160,10 @@ CONFIG_DIR="/home/$USER/.config/$program_name"
 function print_help {
     underline=$(tput smul)
     nounderline=$(tput rmul)
-    echo "A tool to automatically build linux-ck kernels.
+    echo "
+A tool to automatically build linux-ck kernels.
 
-${underline}Usage:${nounderline} $program_name [OPTIONS] [profile_name]
+${underline}Usage:${nounderline} $program_name [ OPTIONS [profile_name] | nobuild ]
 
 ${underline}Options:${nounderline}
    -c [profile_name]     Create and/or set options, default or selected profilename file
@@ -171,6 +172,9 @@ ${underline}Options:${nounderline}
    -a                    Choose desired subarches
 
    -h                    Print help information
+
+${underline}Commands:${nounderline}
+    nobuild              Run script without building a kernel. Use this for first run.
 
 
 Linux-ck kernels: <https://wiki.archlinux.org/title/Unofficial_user_repositories/Repo-ck>
@@ -434,10 +438,15 @@ function main_program {
 echo "  Modprobed-db file$(pp "$localmodcfg" ": $DBFILE" ": No")"
 echo "  Using Clang$(pp "$clangbuild" ": Yes" ": No")"
 echo "  Modules that are not compiled$(pp "$NOMODULES" ": $NOMODULES" ": None")"
-            ( cd "$BUILD_DIR/linux-ck" && makepkg -mC ) > "$logfile"
-            status=$?
+            if [ "$1" == "nobuild" ]; then
+                _buildstatus="Skipping kernel build..."
+                echo "$_buildstatus"
+            else
+                ( cd "$BUILD_DIR/linux-ck" && makepkg -mC ) > "$logfile"
+                status=$?
+                _buildstatus=$(echo -n "$status: "; head -1 "$logfile"; tail -1 "$logfile" | sed 's/==>//g')
+            fi
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $kernel_version"
-            _buildstatus=$(echo -n "$status: "; head -1 "$logfile"; tail -1 "$logfile" | sed 's/==>//g')
             eval "$USER_COMMAND1"
             echo
         else
@@ -473,7 +482,7 @@ case "$option" in
                 profile="linux-ck-autobuild"
             fi
             echo -e "\n\nProfile loaded: $profile.conf"
-            main_program
+            main_program "$([ "$1" == "nobuild" ] && echo "nobuild")"
             eval "$USER_COMMAND2"
         done
         update_repo "cleanup"
