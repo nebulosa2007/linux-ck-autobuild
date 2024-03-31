@@ -33,9 +33,15 @@ The configuration can be accessed at any time by running ``linux-ck-autobuild -c
 
 If you want to fully automate the build script, enable the daemon by running:
 ```
-linux-ck-autobuild -c # Configure first required! Set EDITOR and other parameters as desired
-linux-ck-autobuild    # Check work of script and only then:
+linux-ck-autobuild -c                                  # Configure first required! Set EDITOR and other parameters as desired
+linux-ck-autobuild nobuild                             # Check work of script, init build folders, install dependencies and only then:
 sudo systemctl enable --now linux-ck-autobuild@$USER.timer
+sudo systemctl start linux-ck-autobuild@$USER.service  # To start building the kernel immediately
+
+# To see the status of the kernel build
+systemctl status linux-ck-autobuild@$USER.service
+# or
+journalctl -u linux-ck-autobuild@$USER.service
 ```
 ## Minimum requirements for building archlinux kernel (-ck)
 * CPU (x86_64): any. More cores and MHz - less compile time.
