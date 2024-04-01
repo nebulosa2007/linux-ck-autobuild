@@ -72,6 +72,10 @@ function default_conf {
 # Preferred editor for editing settings
 EDITOR="need_config"
 
+# Compile linux-ck kernel by pkgctl tool in clean chroot
+# https://wiki.archlinux.org/title/DeveloperWiki:Building_in_a_clean_chroot
+USE_DEVTOOLS=""
+
 # For selecting another version of kernel. Format is: 'git_commit:version',
 # e.g. 'bb1d3c5:6.6-2'
 # Use 'git log --oneline' in BUILD_DIR to list them
@@ -202,7 +206,7 @@ function edit_config {
 
 
 function new_profile {
-    skip_parameters="(EDITOR|BUILD_DIR|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|REPO_CK_MIRROR|REPO_CK_NAME|USE_LOCAL_REPO|LOCAL_REPO_FOLDER|LOCAL_REPO_NAME|USE_REPOCTL|REPOCTL_FOLDER|CONFIG_VERSION|PROFILES)"
+    skip_parameters="(EDITOR|USE_DEVTOOLS|BUILD_DIR|USER_COMMAND1|USER_COMMAND2|USER_COMMAND3|REPO_CK_MIRROR|REPO_CK_NAME|USE_LOCAL_REPO|LOCAL_REPO_FOLDER|LOCAL_REPO_NAME|USE_REPOCTL|REPOCTL_FOLDER|CONFIG_VERSION|PROFILES)"
     p=$(basename "$1" .conf)
     if [ ! -r "$CONFIG_DIR/$p.conf" ]; then
         grep -Ev "^(#|$)" "$CONFIG_DIR/$program_name.conf" | grep -Ev $skip_parameters > "$CONFIG_DIR/$p.conf"
@@ -232,7 +236,7 @@ function set_subarches {
 
 
 function update_config {
-    UPDATE=( EDITOR NEEDED_VERSION BUILD_DIR USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 REPO_CK_MIRROR REPO_CK_NAME USE_LOCAL_REPO LOCAL_REPO_FOLDER LOCAL_REPO_NAME USE_REPOCTL REPOCTL_FOLDER DBFILE localmodcfg clangbuild )
+    UPDATE=( EDITOR USE_DEVTOOLS NEEDED_VERSION BUILD_DIR USER_COMMAND1 USER_COMMAND2 USER_COMMAND3 REPO_CK_MIRROR REPO_CK_NAME USE_LOCAL_REPO LOCAL_REPO_FOLDER LOCAL_REPO_NAME USE_REPOCTL REPOCTL_FOLDER DBFILE localmodcfg clangbuild )
 
     mv "$CONFIG_DIR/$program_name.conf" "$CONFIG_DIR/$program_name.old"
     default_conf "$CONFIG_DIR/$program_name.conf"
@@ -320,8 +324,13 @@ function check_build_dir {
         echo "Adding pgp keys"
         sudo pacman-key -r 5EE46C4C --keyserver "keyserver.ubuntu.com" && sudo pacman-key --lsign-key 5EE46C4C # Graysky
         gpg --locate-keys torvalds@kernel.org gregkh@kernel.org # Linus Torvalds and Greg Kroah-Hartman
-        echo "Install dependencies"
-        sudo pacman -Syu --needed base-devel bc cpio gettext libelf pahole python perl tar xz clang llvm lld
+        if [ -n "$USE_DEVTOOLS" ]; then
+            echo "Install nopass option for automatically pkgctl build"
+            (curl -s "https://gitlab.archlinux.org/archlinux/infrastructure/-/raw/master/roles/archbuild/files/sudoers?inline=false"; echo "%wheel            ALL = NOPASSWD: ARCHBUILD") | sudo tee /etc/sudoers.d/pkgctl && sudo chmod 440 /etc/sudoers.d/pkgctl && sudo visudo -c
+        else
+            echo "Install all dependencies for automatically makepkg build"
+            sudo pacman -Syu --needed base-devel bc cpio gettext libelf pahole python perl tar xz clang llvm lld
+        fi
     fi
 }
 
@@ -438,13 +447,27 @@ function main_program {
 echo "  Modprobed-db file$(pp "$localmodcfg" ": $DBFILE" ": No")"
 echo "  Using Clang$(pp "$clangbuild" ": Yes" ": No")"
 echo "  Modules that are not compiled$(pp "$NOMODULES" ": $NOMODULES" ": None")"
-            if [ "$1" == "nobuild" ]; then
-                _buildstatus="Skipping kernel build..."
-                echo "$_buildstatus"
+echo
+            if [ -n "$USE_DEVTOOLS" ]; then
+                echo -e "\nCompile kernel with pkgctl build in clean chroot...\n"
+                echo "$(date) Making package: $kernel_version" > "$logfile"
+                if [ "$1" == "nobuild" ]; then
+                    _buildstatus="Skipping kernel build..."
+                    echo "$_buildstatus"
+                else
+                    ( cd "$BUILD_DIR/linux-ck" && pkgctl build ) >> "$logfile"
+                    status=$?
+                     echo "$(date) Finished making: $kernel_version" >> "$logfile"
+                fi
             else
-                ( cd "$BUILD_DIR/linux-ck" && makepkg -mC ) > "$logfile"
-                status=$?
-                _buildstatus=$(echo -n "$status: "; head -1 "$logfile"; tail -1 "$logfile" | sed 's/==>//g')
+                if [ "$1" == "nobuild" ]; then
+                    _buildstatus="Skipping kernel build..."
+                    echo "$_buildstatus"
+                else
+                    ( cd "$BUILD_DIR/linux-ck" && makepkg -mC ) > "$logfile"
+                    status=$?
+                    _buildstatus=$(echo -n "$status: "; head -1 "$logfile"; tail -1 "$logfile" | sed 's/==>//g')
+                fi
             fi
             echo "$(date +"%Y-%m-%d_%H:%M") End kernel build $kernel_version"
             eval "$USER_COMMAND1"
