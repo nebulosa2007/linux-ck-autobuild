@@ -74,6 +74,8 @@ EDITOR="need_config"
 
 # Compile linux-ck kernel by pkgctl tool in clean chroot
 # https://wiki.archlinux.org/title/DeveloperWiki:Building_in_a_clean_chroot
+# Known issue: all modules are compiled, regardless of whether a localmod is
+# selected or not
 USE_DEVTOOLS=""
 
 # For selecting another version of kernel. Format is: 'git_commit:version',
@@ -151,12 +153,12 @@ subarch=( 39 )
 # Default is 'linux-ck-autobuild'
 PROFILES=( $program_name )
 
-CONFIG_VERSION=0.8.3
+CONFIG_VERSION=0.9.0
 EOF
 }
 
 
-VERSION=0.8.3
+VERSION=0.9.0
 
 CONFIG_DIR="/home/$USER/.config/$program_name"
 
