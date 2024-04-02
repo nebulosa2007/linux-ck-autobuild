@@ -296,7 +296,7 @@ function update_repo {
             last_versions=$(/usr/bin/ls -1 "$LOCAL_REPO_FOLDER"/*.pkg.tar.zst | sort -Vr | sort -ut. -k1,1)
             old_versions=$(/usr/bin/ls -1  "$LOCAL_REPO_FOLDER"/*.pkg.tar.zst | grep -v "$last_versions")
             # shellcheck disable=SC2046,SC2116
-            repo-add -q -n --nocolor "$LOCAL_REPO_FOLDER/$LOCAL_REPO_NAME.db.tar.xz" $(echo "$last_versions") && mv "$old_versions" -t "$LOCAL_REPO_FOLDER/archive" 2>/dev/null
+            repo-add -q -n --nocolor "$LOCAL_REPO_FOLDER/$LOCAL_REPO_NAME.db.tar.zst" $(echo "$last_versions") && mv "$old_versions" -t "$LOCAL_REPO_FOLDER/archive" 2>/dev/null
         fi
     fi
     if [ "$1" == "cleanup" ]; then
