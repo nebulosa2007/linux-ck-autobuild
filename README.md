@@ -14,7 +14,8 @@ https://wiki.archlinux.org/title/Unofficial_user_repositories/Repo-ck
 * Option to add build kernels to your local repo with archive of obsolete packages
 * Frofiles support
 * Ability to build needed commit (version) of linux-ck PKGBUILD (e.g. for compile old versions)
-* Automatically adds and applies *.patch files before the build process.
+* Automatically adds and applies *.patch files before the build process
+* Support building in clean chroot (devtools)
 
 ## Installing
 
