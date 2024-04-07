@@ -10,5 +10,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          tag_name: ${{steps.previous_tag.outputs.tag}}
       - name: Release
         uses: softprops/action-gh-release@v2
