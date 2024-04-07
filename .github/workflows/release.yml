@@ -1,6 +1,9 @@
-name: Main
+name: Make a release
 
-on: push
+on:
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   build:
