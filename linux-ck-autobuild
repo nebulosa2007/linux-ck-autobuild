@@ -434,6 +434,7 @@ function main_program {
             if [ -n "$NOMODULES" ]; then
                 for module in $NOMODULES ; do
                     sed -i 's/'"$module"'=m/#'"$module"' is not set/' "$config"
+                    sed -i 's/'"$module"'=y/#'"$module"' is not set/' "$config"
                 done
                 editconfig="y"
             fi
